@@ -37,7 +37,7 @@ export function getSiderCardRoute(card?: string): string {
 
 export function getSiderCardByPath(pathname: string, search = ''): SiderCardKey | undefined {
   const tab = new URLSearchParams(search).get('tab')
-  if (pathname === '/proxies') {
+  if (pathname === '/proxies' || pathname === '/proxies/nodes' || pathname === '/nodes') {
     if (tab === 'subscriptions') return 'profile'
     if (tab === 'substore') return 'substore'
     return 'proxy'

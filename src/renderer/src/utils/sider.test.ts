@@ -3,6 +3,8 @@ import { getSiderCardByPath, getInitialSiderRoute } from './sider'
 
 describe('sidebar navigation', () => {
   it.each([
+    ['/nodes', '', 'proxy'],
+    ['/proxies/nodes', '', 'proxy'],
     ['/proxies', '?tab=subscriptions', 'profile'],
     ['/proxies', '?tab=substore', 'substore'],
     ['/routing', '?tab=overrides', 'override'],
