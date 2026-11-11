@@ -107,7 +107,7 @@ const TunSwitcher: React.FC<Props> = (props) => {
   if (iconOnly) {
     return (
       <SiderItem
-        className={tunCardStatus}
+        className={`${tunCardStatus} tun-card`}
         title={t('sider.cards.tun')}
         route="/tun"
         icon={<TbDeviceIpadHorizontalBolt className="text-[20px]" />}

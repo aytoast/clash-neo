@@ -27,19 +27,9 @@ import {
   updateTrayIcon,
   updateTrayIconImmediate
 } from '@renderer/utils/ipc'
-import {
-  LuRefreshCw,
-  LuFileCode,
-  LuArrowUpRight,
-  LuMinimize2,
-  LuMaximize2,
-  LuSearch,
-  LuCheck
-} from 'react-icons/lu'
+import { LuRefreshCw, LuFileCode, LuArrowUpRight, LuSearch, LuCheck } from 'react-icons/lu'
 
 const ConfigViewer = lazy(() => import('@renderer/components/sider/config-viewer'))
-
-const COMPACT_MODE_STORAGE_KEY = 'clash_party_dashboard_compact_mode'
 
 const DashboardPage: React.FC = () => {
   const { t } = useTranslation()
@@ -68,14 +58,6 @@ const DashboardPage: React.FC = () => {
     [items, current, t]
   )
 
-  const [compactMode, setCompactMode] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem(COMPACT_MODE_STORAGE_KEY) === 'true'
-    } catch {
-      return false
-    }
-  })
-
   const [showImportDrawer, setShowImportDrawer] = useState(false)
   const [importUrl, setImportUrl] = useState('')
   const [clipboardUrl, setClipboardUrl] = useState<string | null>(null)
@@ -89,14 +71,6 @@ const DashboardPage: React.FC = () => {
   const [download, setDownload] = useState(0)
   const [memory, setMemory] = useState(0)
   const [trafficHistory, setTrafficHistory] = useState<number[]>(Array(24).fill(0))
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(COMPACT_MODE_STORAGE_KEY, String(compactMode))
-    } catch {
-      // ignore
-    }
-  }, [compactMode])
 
   useEffect(() => {
     const onTraffic = (_e: unknown, ...args: unknown[]): void => {
@@ -321,21 +295,6 @@ const DashboardPage: React.FC = () => {
           >
             Import
           </Button>
-          <Tooltip content={compactMode ? 'Switch to full dashboard' : 'Switch to compact mode'}>
-            <Button
-              size="sm"
-              isIconOnly
-              variant="light"
-              onPress={() => setCompactMode((v) => !v)}
-              title={compactMode ? 'Full dashboard' : 'Compact mode'}
-            >
-              {compactMode ? (
-                <LuMaximize2 className="text-sm" />
-              ) : (
-                <LuMinimize2 className="text-sm" />
-              )}
-            </Button>
-          </Tooltip>
         </div>
       }
     >
@@ -432,137 +391,7 @@ const DashboardPage: React.FC = () => {
           </div>
         )}
 
-        {/* COMPACT VPN CONTROLLER MODE */}
-        {compactMode ? (
-          <div className="max-w-[440px] mx-auto py-4">
-            <div className="shadcn-card p-5 border border-divider bg-content1 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-semibold text-foreground">
-                    {tunEnabled && sysProxyEnabled
-                      ? 'Tun + system proxy active'
-                      : tunEnabled
-                        ? 'Tun tunnel protected'
-                        : sysProxyEnabled
-                          ? 'System proxy active'
-                          : 'Disconnected'}
-                  </div>
-                  <div className="text-xs text-default-500 font-mono mt-0.5">
-                    {activeProfile.name} • {mode}
-                  </div>
-                </div>
-                <Button
-                  size="sm"
-                  color={isProtected ? 'danger' : 'primary'}
-                  variant={isProtected ? 'flat' : 'solid'}
-                  className="h-8 px-3.5 text-xs font-medium"
-                  onPress={() => void handleMasterConnectToggle()}
-                >
-                  {isProtected ? 'Disconnect' : 'Connect'}
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex items-center justify-between px-3 py-2 rounded-[6px] border border-divider bg-background">
-                  <div>
-                    <div className="text-xs font-medium text-foreground">System proxy</div>
-                    <div className="text-[10px] text-default-400">Http / socks</div>
-                  </div>
-                  <Switch
-                    size="sm"
-                    isSelected={sysProxyEnabled}
-                    onValueChange={(v) => void handleToggleSysProxy(v)}
-                  />
-                </div>
-                <div className="flex items-center justify-between px-3 py-2 rounded-[6px] border border-divider bg-background">
-                  <div>
-                    <div className="text-xs font-medium text-foreground">Tun mode</div>
-                    <div className="text-[10px] text-default-400">Virtual adapter</div>
-                  </div>
-                  <Switch
-                    size="sm"
-                    isSelected={tunEnabled}
-                    onValueChange={(v) => void handleToggleTun(v)}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-1 p-1 rounded-[6px] border border-divider bg-background">
-                {(['rule', 'global', 'direct'] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => void handleModeChange(m)}
-                    className={`py-1.5 text-xs font-medium rounded-[4px] capitalize transition-colors ${
-                      mode === m
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-default-500 hover:text-foreground'
-                    }`}
-                  >
-                    {t(`sider.cards.outbound.${m}`)}
-                  </button>
-                ))}
-              </div>
-
-              {primaryGroup && (
-                <div className="p-3 rounded-[6px] border border-divider bg-background space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-medium tracking-wider text-default-400">
-                      Exit Node ({primaryGroup.name})
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => void handleTestPrimaryGroup()}
-                      className="text-[10px] font-mono px-1.5 py-0.5 rounded-[4px] border border-divider bg-content1 hover:bg-content2 text-default-600"
-                    >
-                      {testingGroup
-                        ? 'Testing...'
-                        : activeNodeDelay > 0
-                          ? `${activeNodeDelay} ms`
-                          : 'Test'}
-                    </button>
-                  </div>
-                  <div className="text-sm font-semibold text-foreground truncate flag-emoji">
-                    {primaryGroup.now || 'None'}
-                  </div>
-                  <div className="flex flex-wrap gap-1 pt-1">
-                    {(primaryGroup.all || []).slice(0, 6).map((node) => {
-                      const selected = primaryGroup.now === node.name
-                      return (
-                        <button
-                          key={node.name}
-                          type="button"
-                          onClick={() => void handleQuickSelectNode(node.name)}
-                          className={`text-[11px] px-2 py-1 rounded-[4px] border truncate max-w-[125px] flag-emoji transition-colors ${
-                            selected
-                              ? 'border-primary bg-primary text-primary-foreground font-medium'
-                              : 'border-divider bg-content1 hover:bg-content2 text-default-600'
-                          }`}
-                        >
-                          {node.name}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between pt-1 border-t border-divider text-xs font-mono text-default-500">
-                <div className="flex items-center gap-3">
-                  <span>↓ {calcTraffic(download)}/s</span>
-                  <span>↑ {calcTraffic(upload)}/s</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setCompactMode(false)}
-                  className="text-xs text-default-500 hover:text-foreground underline"
-                >
-                  Expand
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
+        {
           /* FULL BENTO COMMAND CENTER */
           <>
             {/* Top Row: Master Connection Control + Active Node Switcher */}
@@ -1043,7 +872,7 @@ const DashboardPage: React.FC = () => {
               </div>
             </div>
           </>
-        )}
+        }
       </div>
     </BasePage>
   )

@@ -807,7 +807,7 @@
   "guide.main.title": "Main Area",
   "guide.main.description": "The right side is the main area of the application, displaying the content of the selected page from the navigation bar.",
   "guide.profile.title": "Profile Management",
-  "guide.profile.description": "The profile management card shows information about the currently running subscription configuration. Click to enter the profile management page where you can manage your subscription configurations.",
+  "guide.profile.description": "Open Proxies, then select Subscriptions to manage profiles and subscriptions.",
   "guide.import.title": "Import Subscription",
   "guide.import.description": "Clash Party supports various subscription import methods. Enter your subscription link here and click import to import your subscription configuration. If your subscription requires a proxy to update, check the 'Proxy' option before importing (this requires having a working subscription first).",
   "guide.substore.title": "Sub-Store",

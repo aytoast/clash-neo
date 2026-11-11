@@ -65,7 +65,7 @@ const ProfileCard: React.FC<Props> = (props) => {
   if (iconOnly) {
     return (
       <SiderItem
-        className={profileCardStatus}
+        className={`${profileCardStatus} profile-card`}
         title={t('sider.cards.profiles')}
         route="/profiles"
         icon={<TiFolder className="text-[20px]" />}

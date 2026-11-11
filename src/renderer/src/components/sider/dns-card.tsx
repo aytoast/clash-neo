@@ -96,7 +96,7 @@ const DNSCard: React.FC<Props> = (props) => {
     return (
       <>
         <SiderItem
-          className={dnsCardStatus}
+          className={`${dnsCardStatus} dns-card`}
           title={isLocalActive ? 'Dns' : t('sider.cards.dns')}
           route="/dns"
           icon={<LuServer className="text-[20px]" />}

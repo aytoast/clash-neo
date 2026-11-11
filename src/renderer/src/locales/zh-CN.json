@@ -807,7 +807,7 @@
   "guide.main.title": "主要区域",
   "guide.main.description": "右侧是应用的主要区域，展示了导航栏所选页面的内容",
   "guide.profile.title": "订阅管理",
-  "guide.profile.description": "订阅管理卡片展示当前运行的订阅配置信息，点击进入订阅管理页面可以在这里管理订阅配置",
+  "guide.profile.description": "打开 Proxies，然后选择 Subscriptions 以管理配置和订阅。",
   "guide.import.title": "订阅导入",
   "guide.import.description": "Clash Party 支持多种订阅导入方式，在此输入订阅链接，点击导入即可导入您的订阅配置，如果您的订阅需要代理才能更新，请勾选\"代理\"再点击导入，当然这需要已经有一个可以正常使用的订阅才可以",
   "guide.substore.title": "Sub-Store",

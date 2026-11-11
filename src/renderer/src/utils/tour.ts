@@ -36,10 +36,10 @@ export function createTourDriver(t: TFunction, navigate: NavigateFunction): void
         }
       },
       {
-        element: '.sysproxy-card',
+        element: "[data-tour='system-proxy'], .sysproxy-card",
         popover: {
-          title: t('guide.card.title'),
-          description: t('guide.card.description'),
+          title: t('guide.sider.title'),
+          description: t('guide.sider.description'),
           side: 'right',
           align: 'start'
         }
@@ -54,7 +54,7 @@ export function createTourDriver(t: TFunction, navigate: NavigateFunction): void
         }
       },
       {
-        element: '.profile-card',
+        element: "[data-tour='profiles'], .profile-card",
         popover: {
           title: t('guide.profile.title'),
           description: t('guide.profile.description'),
@@ -96,7 +96,7 @@ export function createTourDriver(t: TFunction, navigate: NavigateFunction): void
         }
       },
       {
-        element: '.sysproxy-card',
+        element: "[data-tour='system-proxy'], .sysproxy-card",
         popover: {
           title: t('guide.sysproxy.title'),
           description: t('guide.sysproxy.description'),
@@ -120,7 +120,7 @@ export function createTourDriver(t: TFunction, navigate: NavigateFunction): void
         }
       },
       {
-        element: '.tun-card',
+        element: "[data-tour='tun'], .tun-card",
         popover: {
           title: t('guide.tun.title'),
           description: t('guide.tun.description'),
@@ -144,7 +144,7 @@ export function createTourDriver(t: TFunction, navigate: NavigateFunction): void
         }
       },
       {
-        element: '.override-card',
+        element: "[data-tour='overrides'], .override-card",
         popover: {
           title: t('guide.override.title'),
           description: t('guide.override.description'),
@@ -153,7 +153,7 @@ export function createTourDriver(t: TFunction, navigate: NavigateFunction): void
         }
       },
       {
-        element: '.dns-card',
+        element: "[data-tour='dns'], .dns-card",
         popover: {
           title: t('guide.dns.title'),
           description: t('guide.dns.description'),

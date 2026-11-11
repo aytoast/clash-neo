@@ -34,7 +34,7 @@ const OverrideCard: React.FC<Props> = (props) => {
   if (iconOnly) {
     return (
       <SiderItem
-        className={overrideCardStatus}
+        className={`${overrideCardStatus} override-card`}
         title={t('sider.cards.override')}
         route="/override"
         icon={<MdFormatOverline className="text-[20px]" />}

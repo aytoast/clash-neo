@@ -62,7 +62,7 @@ const SysproxySwitcher: React.FC<Props> = (props) => {
   if (iconOnly) {
     return (
       <SiderItem
-        className={sysproxyCardStatus}
+        className={`${sysproxyCardStatus} sysproxy-card`}
         title={t('sider.cards.systemProxy')}
         route="/sysproxy"
         icon={<AiOutlineGlobal className="text-[20px]" />}

@@ -33,7 +33,6 @@ import {
 } from 'react-icons/lu'
 
 const ConfigViewer = lazy(() => import('./config-viewer'))
-const SiderCards = lazy(() => import('./sider-cards'))
 
 const WorkspaceSidebar: React.FC = () => {
   const { t } = useTranslation()
@@ -214,12 +213,14 @@ const WorkspaceSidebar: React.FC = () => {
     label: string
     badge?: React.ReactNode
     rightAction?: React.ReactNode
+    tourTarget?: string
   }): React.JSX.Element => {
     const active = isRouteActive(opts.route)
     return (
       <div
         role="button"
         tabIndex={0}
+        data-tour={opts.tourTarget}
         key={opts.route}
         onClick={() => navigate(opts.route)}
         onKeyDown={(e) => {
@@ -273,6 +274,7 @@ const WorkspaceSidebar: React.FC = () => {
           route: '/proxies',
           icon: <LuLayers />,
           label: 'Proxies',
+          tourTarget: 'profiles',
           rightAction: (
             <div className="flex items-center gap-1">
               <Tooltip content={t('sider.cards.viewRuntimeConfig')} delay={500}>
@@ -314,6 +316,7 @@ const WorkspaceSidebar: React.FC = () => {
           route: '/routing',
           icon: <LuCompass />,
           label: 'Routing',
+          tourTarget: 'overrides',
           rightAction: (
             <span className="text-xs font-mono px-2 py-0.5 rounded-[4px] border border-divider bg-background text-default-500">
               {rules?.rules?.length ?? 0}
@@ -328,11 +331,9 @@ const WorkspaceSidebar: React.FC = () => {
         {renderNavRow({
           route: '/settings',
           icon: <LuSettings />,
-          label: 'Settings'
+          label: 'Settings',
+          tourTarget: 'dns'
         })}
-        <Suspense fallback={null}>
-          <SiderCards />
-        </Suspense>
       </div>
 
       {/* Persistent Bottom Bar */}
@@ -343,6 +344,7 @@ const WorkspaceSidebar: React.FC = () => {
           <button
             type="button"
             disabled={togglingProxy}
+            data-tour="system-proxy"
             onClick={() => void handleToggleSysProxy(!sysProxyEnabled)}
             className={`flex items-center justify-between px-2.5 py-1.5 rounded-[5px] border text-xs font-medium transition-all ${
               sysProxyEnabled
@@ -367,6 +369,7 @@ const WorkspaceSidebar: React.FC = () => {
           {/* TUN Mode */}
           <button
             type="button"
+            data-tour="tun"
             onClick={() => void handleToggleTun(!tunEnabled)}
             className={`flex items-center justify-between px-2.5 py-1.5 rounded-[5px] border text-xs font-medium transition-all ${
               tunEnabled
