@@ -139,7 +139,7 @@ const RuleProviderEditorModal: React.FC<Props> = (props) => {
       isDismissable={!saving}
       isKeyboardDismissDisabled={saving}
       onClose={onClose}
-      classNames={{ backdrop: 'top-[48px]', base: 'max-h-[calc(100dvh-80px)]' }}
+      classNames={{ backdrop: 'top-[32px]', base: 'max-h-[calc(100dvh-80px)]' }}
     >
       <ModalContent>
         <ModalHeader className="app-drag min-w-0">

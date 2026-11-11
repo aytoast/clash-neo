@@ -1,3 +1,4 @@
+import '@renderer/utils/browser-shim'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
@@ -26,6 +27,18 @@ if (!window.location.hash) {
 }
 
 init().then(() => {
+  document.addEventListener('contextmenu', (e) => {
+    const target = e.target as HTMLElement | null
+    if (
+      target?.tagName === 'INPUT' ||
+      target?.tagName === 'TEXTAREA' ||
+      target?.isContentEditable
+    ) {
+      return
+    }
+    e.preventDefault()
+  })
+
   document.addEventListener('keydown', (e) => {
     if (platform !== 'darwin' && e.ctrlKey && e.key === 'q') {
       e.preventDefault()

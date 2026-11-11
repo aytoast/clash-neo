@@ -245,7 +245,7 @@ function latencyBarColor(latency: number | null): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const providers: { value: IPProvider; label: string }[] = [
-  { value: 'ip.sb', label: 'IP.SB' },
+  { value: 'ip.sb', label: 'ip.sb' },
   { value: 'ipwho.is', label: 'ipwho.is' },
   { value: 'ipapi.is', label: 'ipapi.is' }
 ]
@@ -267,7 +267,11 @@ const InfoRow: React.FC<InfoRowProps> = ({ label, value, mono }) => (
   </div>
 )
 
-const IPPage: React.FC = () => {
+interface NetworkPageProps {
+  embedded?: boolean
+}
+
+const IPPage: React.FC<NetworkPageProps> = ({ embedded = false }) => {
   const { t } = useTranslation()
   const { appConfig, patchAppConfig } = useAppConfig()
   const [provider, setProvider] = useState<IPProvider>(
@@ -491,352 +495,352 @@ const IPPage: React.FC = () => {
     setTimeout(() => setCopied(false), 2000)
   }, [ipInfo?.ip])
 
-  return (
-    <BasePage title={t('network.title')}>
-      <div className="m-2 flex flex-col gap-4">
-        <div style={{ overflowX: 'clip' }} className="flex flex-col gap-4">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragEnd={handleCardDragEnd}
-          >
-            <SortableContext items={cardOrder} strategy={verticalListSortingStrategy}>
-              {/* 当前 IP 卡片 */}
-              <SortableNetworkInfoCard id="ip" order={cardOrder.indexOf('ip')}>
-                <div className="rounded-xl border border-foreground/10 bg-content1 p-4 shadow-sm">
-                  {/* 卡片 Header */}
-                  <div className="mb-3.5 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                        <IoMdGlobe size={18} />
-                      </div>
-                      <h3 className="text-[15px] font-semibold">{t('network.ipCard.title')}</h3>
+  const bodyContent = (
+    <div className="m-2 flex flex-col gap-4">
+      <div style={{ overflowX: 'clip' }} className="flex flex-col gap-4">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragEnd={handleCardDragEnd}
+        >
+          <SortableContext items={cardOrder} strategy={verticalListSortingStrategy}>
+            {/* 当前 IP 卡片 */}
+            <SortableNetworkInfoCard id="ip" order={cardOrder.indexOf('ip')}>
+              <div className="rounded-xl border border-foreground/10 bg-content1 p-4 shadow-sm">
+                {/* 卡片 Header */}
+                <div className="mb-3.5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                      <IoMdGlobe size={18} />
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Select
-                        size="sm"
-                        className="w-28"
-                        selectedKeys={[provider]}
-                        onSelectionChange={(keys) => {
-                          const val = Array.from(keys)[0] as IPProvider
-                          if (val) {
-                            setProvider(val)
-                            patchAppConfig({ networkIPProvider: val })
-                            fetchIP(val)
-                          }
-                        }}
-                      >
-                        {providers.map((p) => (
-                          <SelectItem key={p.value}>{p.label}</SelectItem>
-                        ))}
-                      </Select>
-                      <Button
-                        size="sm"
-                        isIconOnly
-                        variant="light"
-                        isLoading={loading}
-                        onPress={() => fetchIP()}
-                        className="h-7 w-7 min-w-0"
-                      >
-                        <IoRefresh size={16} />
-                      </Button>
-                    </div>
+                    <h3 className="text-[15px] font-semibold">{t('network.ipCard.title')}</h3>
                   </div>
+                  <div className="flex items-center gap-1.5">
+                    <Select
+                      size="sm"
+                      className="w-28"
+                      selectedKeys={[provider]}
+                      onSelectionChange={(keys) => {
+                        const val = Array.from(keys)[0] as IPProvider
+                        if (val) {
+                          setProvider(val)
+                          patchAppConfig({ networkIPProvider: val })
+                          fetchIP(val)
+                        }
+                      }}
+                    >
+                      {providers.map((p) => (
+                        <SelectItem key={p.value}>{p.label}</SelectItem>
+                      ))}
+                    </Select>
+                    <Button
+                      size="sm"
+                      isIconOnly
+                      variant="light"
+                      isLoading={loading}
+                      onPress={() => fetchIP()}
+                      className="h-7 w-7 min-w-0"
+                    >
+                      <IoRefresh size={16} />
+                    </Button>
+                  </div>
+                </div>
 
-                  {/* 加载中 */}
-                  {loading && !ipInfo && (
-                    <div className="flex justify-center py-6">
-                      <span className="h-6 w-6 animate-spin rounded-full border-2 border-foreground/10 border-t-primary" />
-                    </div>
-                  )}
+                {/* 加载中 */}
+                {loading && !ipInfo && (
+                  <div className="flex justify-center py-6">
+                    <span className="h-6 w-6 animate-spin rounded-full border-2 border-foreground/10 border-t-primary" />
+                  </div>
+                )}
 
-                  {/* 错误 */}
-                  {error && (
-                    <div className="rounded-lg border border-danger/20 bg-danger/10 p-3 text-[13px] text-danger">
-                      {error}
-                    </div>
-                  )}
+                {/* 错误 */}
+                {error && (
+                  <div className="rounded-lg border border-danger/20 bg-danger/10 p-3 text-[13px] text-danger">
+                    {error}
+                  </div>
+                )}
 
-                  {/* IP 信息 */}
-                  {ipInfo && (
-                    <div className="flex flex-col gap-2.5">
-                      {/* IP 地址高亮行（负 margin 贴边） */}
-                      <div className="-mx-1 -mt-1 mb-1 flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/8 px-2.5 py-2">
-                        <span className="shrink-0 text-[13px] text-foreground/60">
-                          {t('network.ipAddress')}
+                {/* IP 信息 */}
+                {ipInfo && (
+                  <div className="flex flex-col gap-2.5">
+                    {/* IP 地址高亮行（负 margin 贴边） */}
+                    <div className="-mx-1 -mt-1 mb-1 flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/8 px-2.5 py-2">
+                      <span className="shrink-0 text-[13px] text-foreground/60">
+                        {t('network.ipAddress')}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="overflow-hidden text-right font-mono text-[13px] font-semibold text-primary text-ellipsis whitespace-nowrap">
+                          {hidden ? '••••••••••••••' : ipInfo.ip}
                         </span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="overflow-hidden text-right font-mono text-[13px] font-semibold text-primary text-ellipsis whitespace-nowrap">
-                            {hidden ? '••••••••••••••' : ipInfo.ip}
-                          </span>
+                        <button
+                          onClick={() => setHidden((h) => !h)}
+                          className="shrink-0 text-primary/60 hover:text-primary transition-colors"
+                        >
+                          {hidden ? <IoEyeOffOutline size={14} /> : <IoEyeOutline size={14} />}
+                        </button>
+                        <Tooltip content={copied ? t('network.copied') : t('network.copy')}>
                           <button
-                            onClick={() => setHidden((h) => !h)}
+                            onClick={handleCopy}
                             className="shrink-0 text-primary/60 hover:text-primary transition-colors"
                           >
-                            {hidden ? <IoEyeOffOutline size={14} /> : <IoEyeOutline size={14} />}
+                            {copied ? <IoCheckmark size={14} /> : <IoCopyOutline size={14} />}
                           </button>
-                          <Tooltip content={copied ? t('network.copied') : t('network.copy')}>
-                            <button
-                              onClick={handleCopy}
-                              className="shrink-0 text-primary/60 hover:text-primary transition-colors"
-                            >
-                              {copied ? <IoCheckmark size={14} /> : <IoCopyOutline size={14} />}
-                            </button>
-                          </Tooltip>
-                        </div>
+                        </Tooltip>
                       </div>
+                    </div>
 
-                      {ipInfo.country && (
-                        <InfoRow
-                          label={t('network.country')}
-                          value={
-                            <span className="flex items-center justify-end gap-1.5">
-                              <CountryFlag code={ipInfo.countryCode} />
-                              <span>{ipInfo.country}</span>
-                            </span>
-                          }
-                        />
-                      )}
-                      {ipInfo.region && (
-                        <InfoRow label={t('network.region')} value={ipInfo.region} />
-                      )}
-                      {ipInfo.city && <InfoRow label={t('network.city')} value={ipInfo.city} />}
-                      {ipInfo.timezone && (
-                        <InfoRow label={t('network.timezone')} value={ipInfo.timezone} />
-                      )}
-                      {ipInfo.latitude != null && ipInfo.longitude != null && (
-                        <InfoRow
-                          label={t('network.coordinates')}
-                          value={`${ipInfo.latitude.toFixed(4)}, ${ipInfo.longitude.toFixed(4)}`}
-                          mono
-                        />
-                      )}
-                      {ipInfo.asn != null && <InfoRow label="ASN" value={`AS${ipInfo.asn}`} mono />}
-                      {ipInfo.org && (
-                        <InfoRow label={t('network.organization')} value={ipInfo.org} />
-                      )}
-                      {ipInfo.isp && <InfoRow label="ISP" value={ipInfo.isp} />}
-
-                      {(ipInfo.isProxy !== undefined || ipInfo.isVPN !== undefined) && (
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="shrink-0 text-[13px] text-foreground/60">
-                            {t('network.proxyDetection')}
+                    {ipInfo.country && (
+                      <InfoRow
+                        label={t('network.country')}
+                        value={
+                          <span className="flex items-center justify-end gap-1.5">
+                            <CountryFlag code={ipInfo.countryCode} />
+                            <span>{ipInfo.country}</span>
                           </span>
-                          <div className="flex gap-1">
-                            {ipInfo.isProxy && (
-                              <Chip
-                                size="sm"
-                                color="warning"
-                                variant="flat"
-                                classNames={{ content: 'text-[11px] font-semibold uppercase' }}
-                              >
-                                Proxy
-                              </Chip>
-                            )}
-                            {ipInfo.isVPN && (
-                              <Chip
-                                size="sm"
-                                color="warning"
-                                variant="flat"
-                                classNames={{ content: 'text-[11px] font-semibold uppercase' }}
-                              >
-                                VPN
-                              </Chip>
-                            )}
-                            {!ipInfo.isProxy && !ipInfo.isVPN && (
-                              <Chip
-                                size="sm"
-                                color="success"
-                                variant="flat"
-                                classNames={{ content: 'text-[11px] font-semibold uppercase' }}
-                              >
-                                {t('network.clean')}
-                              </Chip>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        }
+                      />
+                    )}
+                    {ipInfo.region && <InfoRow label={t('network.region')} value={ipInfo.region} />}
+                    {ipInfo.city && <InfoRow label={t('network.city')} value={ipInfo.city} />}
+                    {ipInfo.timezone && (
+                      <InfoRow label={t('network.timezone')} value={ipInfo.timezone} />
+                    )}
+                    {ipInfo.latitude != null && ipInfo.longitude != null && (
+                      <InfoRow
+                        label={t('network.coordinates')}
+                        value={`${ipInfo.latitude.toFixed(4)}, ${ipInfo.longitude.toFixed(4)}`}
+                        mono
+                      />
+                    )}
+                    {ipInfo.asn != null && <InfoRow label="Asn" value={`AS${ipInfo.asn}`} mono />}
+                    {ipInfo.org && <InfoRow label={t('network.organization')} value={ipInfo.org} />}
+                    {ipInfo.isp && <InfoRow label="Isp" value={ipInfo.isp} />}
 
-                  {!loading && !error && !ipInfo && (
-                    <div className="py-6 text-center text-sm text-foreground/50">
-                      {t('network.noData')}
-                    </div>
-                  )}
-                </div>
-              </SortableNetworkInfoCard>
-
-              {/* 网络拓扑卡片 */}
-              <SortableNetworkInfoCard id="topology" order={cardOrder.indexOf('topology')}>
-                <NetworkTopologyCard />
-              </SortableNetworkInfoCard>
-
-              {/* 网络延迟卡片 */}
-              <SortableNetworkInfoCard id="latency" order={cardOrder.indexOf('latency')}>
-                <div className="rounded-xl border border-foreground/10 bg-content1 p-4 shadow-sm">
-                  <div className="mb-3.5 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                        <IoMdPulse size={18} />
-                      </div>
-                      <h3 className="text-[15px] font-semibold">{t('network.latency.title')}</h3>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {averageLatency !== null && (
-                        <span
-                          className={`rounded-md px-2 py-1 text-xs font-semibold ${
-                            averageLatency < 100
-                              ? 'bg-success/15 text-success'
-                              : averageLatency < 300
-                                ? 'bg-warning/15 text-warning'
-                                : 'bg-danger/15 text-danger'
-                          }`}
-                        >
-                          {t('network.latency.average')}: {averageLatency}ms
+                    {(ipInfo.isProxy !== undefined || ipInfo.isVPN !== undefined) && (
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="shrink-0 text-[13px] text-foreground/60">
+                          {t('network.proxyDetection')}
                         </span>
-                      )}
-                      <Tooltip content={t('network.latency.add')}>
-                        <Button
-                          size="sm"
-                          isIconOnly
-                          variant={isAddingLatencyTarget ? 'flat' : 'light'}
-                          className="h-7 w-7 min-w-0"
-                          aria-label={t('network.latency.add')}
-                          onPress={openLatencyTargetForm}
-                        >
-                          <IoAdd size={16} />
-                        </Button>
-                      </Tooltip>
+                        <div className="flex gap-1">
+                          {ipInfo.isProxy && (
+                            <Chip
+                              size="sm"
+                              color="warning"
+                              variant="flat"
+                              classNames={{ content: 'text-[11px] font-semibold' }}
+                            >
+                              Proxy
+                            </Chip>
+                          )}
+                          {ipInfo.isVPN && (
+                            <Chip
+                              size="sm"
+                              color="warning"
+                              variant="flat"
+                              classNames={{ content: 'text-[11px] font-semibold' }}
+                            >
+                              Vpn
+                            </Chip>
+                          )}
+                          {!ipInfo.isProxy && !ipInfo.isVPN && (
+                            <Chip
+                              size="sm"
+                              color="success"
+                              variant="flat"
+                              classNames={{ content: 'text-[11px] font-semibold' }}
+                            >
+                              {t('network.clean')}
+                            </Chip>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!loading && !error && !ipInfo && (
+                  <div className="py-6 text-center text-sm text-foreground/50">
+                    {t('network.noData')}
+                  </div>
+                )}
+              </div>
+            </SortableNetworkInfoCard>
+
+            {/* 网络拓扑卡片 */}
+            <SortableNetworkInfoCard id="topology" order={cardOrder.indexOf('topology')}>
+              <NetworkTopologyCard />
+            </SortableNetworkInfoCard>
+
+            {/* 网络延迟卡片 */}
+            <SortableNetworkInfoCard id="latency" order={cardOrder.indexOf('latency')}>
+              <div className="rounded-xl border border-foreground/10 bg-content1 p-4 shadow-sm">
+                <div className="mb-3.5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                      <IoMdPulse size={18} />
+                    </div>
+                    <h3 className="text-[15px] font-semibold">{t('network.latency.title')}</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {averageLatency !== null && (
+                      <span
+                        className={`rounded-md px-2 py-1 text-xs font-semibold ${
+                          averageLatency < 100
+                            ? 'bg-success/15 text-success'
+                            : averageLatency < 300
+                              ? 'bg-warning/15 text-warning'
+                              : 'bg-danger/15 text-danger'
+                        }`}
+                      >
+                        {t('network.latency.average')}: {averageLatency}ms
+                      </span>
+                    )}
+                    <Tooltip content={t('network.latency.add')}>
+                      <Button
+                        size="sm"
+                        isIconOnly
+                        variant={isAddingLatencyTarget ? 'flat' : 'light'}
+                        className="h-7 w-7 min-w-0"
+                        aria-label={t('network.latency.add')}
+                        onPress={openLatencyTargetForm}
+                      >
+                        <IoAdd size={16} />
+                      </Button>
+                    </Tooltip>
+                    <Button
+                      size="sm"
+                      isIconOnly
+                      variant="light"
+                      isLoading={testingLatency}
+                      isDisabled={testingLatency}
+                      onPress={testAllLatencies}
+                      className="h-7 w-7 min-w-0"
+                    >
+                      <IoRefresh size={16} />
+                    </Button>
+                  </div>
+                </div>
+
+                {isAddingLatencyTarget && (
+                  <div className="mb-3 flex flex-wrap items-start gap-2">
+                    <Input
+                      size="sm"
+                      className="min-w-32 flex-1"
+                      value={customLatencyName}
+                      placeholder={t('network.latency.namePlaceholder')}
+                      aria-label={t('network.latency.namePlaceholder')}
+                      isInvalid={customLatencyNameError}
+                      errorMessage={
+                        customLatencyNameError ? t('network.latency.invalidName') : undefined
+                      }
+                      onValueChange={updateCustomLatencyName}
+                      onKeyDown={submitLatencyTargetOnEnter}
+                    />
+                    <Input
+                      size="sm"
+                      className="min-w-48 flex-[1.5]"
+                      value={customLatencyUrl}
+                      placeholder={t('network.latency.urlPlaceholder')}
+                      aria-label={t('network.latency.urlPlaceholder')}
+                      isInvalid={customLatencyUrlError}
+                      errorMessage={
+                        customLatencyUrlError ? t('network.latency.invalidUrl') : undefined
+                      }
+                      onValueChange={updateCustomLatencyUrl}
+                      onKeyDown={submitLatencyTargetOnEnter}
+                    />
+                    <Tooltip content={t('common.save')}>
+                      <Button
+                        size="sm"
+                        isIconOnly
+                        variant="flat"
+                        color="primary"
+                        className="h-8 w-8 min-w-0"
+                        aria-label={t('common.save')}
+                        onPress={addCustomLatencyTarget}
+                      >
+                        <IoCheckmark size={16} />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content={t('common.cancel')}>
                       <Button
                         size="sm"
                         isIconOnly
                         variant="light"
-                        isLoading={testingLatency}
-                        isDisabled={testingLatency}
-                        onPress={testAllLatencies}
-                        className="h-7 w-7 min-w-0"
+                        className="h-8 w-8 min-w-0"
+                        aria-label={t('common.cancel')}
+                        onPress={closeLatencyTargetForm}
                       >
-                        <IoRefresh size={16} />
+                        <IoClose size={16} />
                       </Button>
-                    </div>
+                    </Tooltip>
                   </div>
+                )}
 
-                  {isAddingLatencyTarget && (
-                    <div className="mb-3 flex flex-wrap items-start gap-2">
-                      <Input
-                        size="sm"
-                        className="min-w-32 flex-1"
-                        value={customLatencyName}
-                        placeholder={t('network.latency.namePlaceholder')}
-                        aria-label={t('network.latency.namePlaceholder')}
-                        isInvalid={customLatencyNameError}
-                        errorMessage={
-                          customLatencyNameError ? t('network.latency.invalidName') : undefined
-                        }
-                        onValueChange={updateCustomLatencyName}
-                        onKeyDown={submitLatencyTargetOnEnter}
-                      />
-                      <Input
-                        size="sm"
-                        className="min-w-48 flex-[1.5]"
-                        value={customLatencyUrl}
-                        placeholder={t('network.latency.urlPlaceholder')}
-                        aria-label={t('network.latency.urlPlaceholder')}
-                        isInvalid={customLatencyUrlError}
-                        errorMessage={
-                          customLatencyUrlError ? t('network.latency.invalidUrl') : undefined
-                        }
-                        onValueChange={updateCustomLatencyUrl}
-                        onKeyDown={submitLatencyTargetOnEnter}
-                      />
-                      <Tooltip content={t('common.save')}>
-                        <Button
-                          size="sm"
-                          isIconOnly
-                          variant="flat"
-                          color="primary"
-                          className="h-8 w-8 min-w-0"
-                          aria-label={t('common.save')}
-                          onPress={addCustomLatencyTarget}
-                        >
-                          <IoCheckmark size={16} />
-                        </Button>
-                      </Tooltip>
-                      <Tooltip content={t('common.cancel')}>
-                        <Button
-                          size="sm"
-                          isIconOnly
-                          variant="light"
-                          className="h-8 w-8 min-w-0"
-                          aria-label={t('common.cancel')}
-                          onPress={closeLatencyTargetForm}
-                        >
-                          <IoClose size={16} />
-                        </Button>
-                      </Tooltip>
-                    </div>
-                  )}
-
-                  <div className="flex flex-col gap-3">
-                    {latencyTargets.map((target) => {
-                      const res = latencyResults[target.url]
-                      return (
-                        <div key={target.url} className="flex items-center gap-3">
-                          <span className="w-20 shrink-0 overflow-hidden text-[13px] text-ellipsis whitespace-nowrap">
-                            {target.name}
-                          </span>
-                          <div className="h-2 flex-1 overflow-hidden rounded-full bg-foreground/10">
-                            <div
-                              className={`h-full rounded-full transition-[width] duration-500 ease-out ${latencyBarColor(res?.latency ?? null)}`}
-                              style={{
-                                width:
-                                  res?.status === 'success' && res.latency !== null
-                                    ? `${Math.min((res.latency / 500) * 100, 100)}%`
-                                    : '0%'
-                              }}
-                            />
-                          </div>
-                          <span className="w-16 shrink-0 text-right font-mono text-[13px]">
-                            {!res || res.status === 'idle' ? (
-                              <span className="text-foreground/40">-</span>
-                            ) : res.status === 'pending' ? (
-                              <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-foreground/10 border-t-primary" />
-                            ) : res.status === 'success' ? (
-                              <span className={latencyColor(res.latency)}>{res.latency}ms</span>
-                            ) : (
-                              <span className="text-danger">{t('network.latency.timeout')}</span>
-                            )}
-                          </span>
-                          {target.custom ? (
-                            <Tooltip content={t('common.delete')}>
-                              <Button
-                                size="sm"
-                                isIconOnly
-                                variant="light"
-                                color="danger"
-                                className="h-6 w-6 min-w-0 shrink-0"
-                                aria-label={t('common.delete')}
-                                onPress={() => removeCustomLatencyTarget(target.url)}
-                              >
-                                <IoClose size={14} />
-                              </Button>
-                            </Tooltip>
-                          ) : (
-                            <span className="h-6 w-6 shrink-0" />
-                          )}
+                <div className="flex flex-col gap-3">
+                  {latencyTargets.map((target) => {
+                    const res = latencyResults[target.url]
+                    return (
+                      <div key={target.url} className="flex items-center gap-3">
+                        <span className="w-20 shrink-0 overflow-hidden text-[13px] text-ellipsis whitespace-nowrap">
+                          {target.name}
+                        </span>
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-foreground/10">
+                          <div
+                            className={`h-full rounded-full transition-[width] duration-500 ease-out ${latencyBarColor(res?.latency ?? null)}`}
+                            style={{
+                              width:
+                                res?.status === 'success' && res.latency !== null
+                                  ? `${Math.min((res.latency / 500) * 100, 100)}%`
+                                  : '0%'
+                            }}
+                          />
                         </div>
-                      )
-                    })}
-                  </div>
+                        <span className="w-16 shrink-0 text-right font-mono text-[13px]">
+                          {!res || res.status === 'idle' ? (
+                            <span className="text-foreground/40">-</span>
+                          ) : res.status === 'pending' ? (
+                            <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-foreground/10 border-t-primary" />
+                          ) : res.status === 'success' ? (
+                            <span className={latencyColor(res.latency)}>{res.latency}ms</span>
+                          ) : (
+                            <span className="text-danger">{t('network.latency.timeout')}</span>
+                          )}
+                        </span>
+                        {target.custom ? (
+                          <Tooltip content={t('common.delete')}>
+                            <Button
+                              size="sm"
+                              isIconOnly
+                              variant="light"
+                              color="danger"
+                              className="h-6 w-6 min-w-0 shrink-0"
+                              aria-label={t('common.delete')}
+                              onPress={() => removeCustomLatencyTarget(target.url)}
+                            >
+                              <IoClose size={14} />
+                            </Button>
+                          </Tooltip>
+                        ) : (
+                          <span className="h-6 w-6 shrink-0" />
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
-              </SortableNetworkInfoCard>
-            </SortableContext>
-          </DndContext>
-        </div>
+              </div>
+            </SortableNetworkInfoCard>
+          </SortableContext>
+        </DndContext>
       </div>
-    </BasePage>
+    </div>
   )
+
+  if (embedded) {
+    return bodyContent
+  }
+
+  return <BasePage title={t('network.title')}>{bodyContent}</BasePage>
 }
 
 export default IPPage

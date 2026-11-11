@@ -126,7 +126,7 @@ const PluginInstallModal: React.FC<Props> = ({ onClose, initialFile, initialData
   return (
     <Modal
       backdrop="blur"
-      classNames={{ backdrop: 'top-[48px]' }}
+      classNames={{ backdrop: 'top-[32px]' }}
       isOpen
       hideCloseButton
       onOpenChange={(open) => !open && onClose()}

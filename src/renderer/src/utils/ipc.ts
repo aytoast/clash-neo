@@ -241,6 +241,10 @@ interface IpcApi {
   showMainWindow: () => Promise<void>
   closeMainWindow: () => Promise<void>
   triggerMainWindow: () => Promise<void>
+  windowMinimize: () => Promise<void>
+  windowMaximize: () => Promise<void>
+  windowClose: () => Promise<void>
+  windowIsMaximized: () => Promise<boolean>
   showFloatingWindow: () => Promise<void>
   closeFloatingWindow: () => Promise<void>
   showContextMenu: () => Promise<void>
@@ -437,6 +441,10 @@ export const {
   showMainWindow,
   closeMainWindow,
   triggerMainWindow,
+  windowMinimize,
+  windowMaximize,
+  windowClose,
+  windowIsMaximized,
   showFloatingWindow,
   closeFloatingWindow,
   showContextMenu,

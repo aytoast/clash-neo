@@ -451,6 +451,17 @@ const syncHandlers: Record<string, SyncFn> = {
   showMainWindow,
   closeMainWindow,
   triggerMainWindow,
+  windowMinimize: () => mainWindow?.minimize(),
+  windowMaximize: () => {
+    if (!mainWindow) return
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize()
+    } else {
+      mainWindow.maximize()
+    }
+  },
+  windowClose: () => mainWindow?.close(),
+  windowIsMaximized: () => mainWindow?.isMaximized() ?? false,
   setAlwaysOnTop: (alwaysOnTop: boolean) => mainWindow?.setAlwaysOnTop(alwaysOnTop),
   isAlwaysOnTop: () => mainWindow?.isAlwaysOnTop(),
   openDevTools: () => mainWindow?.webContents.openDevTools(),

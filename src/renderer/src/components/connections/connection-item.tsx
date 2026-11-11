@@ -1,8 +1,9 @@
-import { Avatar, Button, Card, CardFooter, CardHeader, Chip } from '@heroui/react'
+import { Avatar, Button } from '@heroui/react'
 import { calcTraffic } from '@renderer/utils/calc'
 import dayjs from '@renderer/utils/dayjs'
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { CgClose, CgTrash } from 'react-icons/cg'
+import { LuCompass, LuInfo } from 'react-icons/lu'
 import { platform } from '@renderer/utils/init'
 import { connectionFallbackIcon } from '@renderer/utils/connection-icon'
 
@@ -15,6 +16,7 @@ interface Props {
   selected: IMihomoConnectionDetail | undefined
   setSelected: React.Dispatch<React.SetStateAction<IMihomoConnectionDetail | undefined>>
   setIsDetailModalOpen: React.Dispatch<React.SetStateAction<boolean>>
+  onOpenQuickRoute?: (conn: IMihomoConnectionDetail) => void
   close: (id: string) => void
 }
 
@@ -26,7 +28,8 @@ const ConnectionItemComponent: React.FC<Props> = ({
   displayName,
   close,
   setSelected,
-  setIsDetailModalOpen
+  setIsDetailModalOpen,
+  onOpenQuickRoute
 }) => {
   const fallbackProcessName = useMemo(
     () => info.metadata.process?.replace(/\.exe$/, '') || info.metadata.sourceIP,
@@ -60,14 +63,12 @@ const ConnectionItemComponent: React.FC<Props> = ({
   }, [info.start])
 
   const uploadTraffic = useMemo(() => calcTraffic(info.upload), [info.upload])
-
   const downloadTraffic = useMemo(() => calcTraffic(info.download), [info.download])
 
   const uploadSpeed = useMemo(
     () => (info.uploadSpeed ? calcTraffic(info.uploadSpeed) : null),
     [info.uploadSpeed]
   )
-
   const downloadSpeed = useMemo(
     () => (info.downloadSpeed ? calcTraffic(info.downloadSpeed) : null),
     [info.downloadSpeed]
@@ -78,84 +79,150 @@ const ConnectionItemComponent: React.FC<Props> = ({
     [info.uploadSpeed, info.downloadSpeed]
   )
 
-  const handleCardPress = useCallback(() => {
+  const handleOpenDetail = useCallback(() => {
     setSelected(info)
     setIsDetailModalOpen(true)
   }, [info, setSelected, setIsDetailModalOpen])
+
+  const handleRouteClick = useCallback(() => {
+    onOpenQuickRoute?.(info)
+  }, [info, onOpenQuickRoute])
 
   const handleClose = useCallback(() => {
     close(info.id)
   }, [close, info.id])
 
+  const isDirect = info.chains[0]?.toUpperCase() === 'DIRECT'
+
   return (
-    <div className={`px-2 pb-2 ${index === 0 ? 'pt-2' : ''}`} style={{ minHeight: 80 }}>
-      <Card as="div" isPressable className="w-full" onPress={handleCardPress}>
-        <div className="w-full flex justify-between items-center">
-          {displayIcon && (
-            <div>
-              <Avatar
-                size="lg"
-                radius="sm"
-                src={iconUrl || fallbackIcon}
-                showFallback
-                fallback={<img src={fallbackIcon} alt="" className="w-full h-full object-cover" />}
-                classNames={{ fallback: 'w-full h-full' }}
-                className="bg-transparent ml-2 w-12 h-12"
-              />
-            </div>
-          )}
-          <div
-            className={`w-full flex flex-col justify-start truncate relative ${displayIcon ? '-ml-2' : ''}`}
-          >
-            <CardHeader className="pb-0 gap-1 flex items-center pr-12 relative">
-              <div className="ml-2 flex-1 text-ellipsis whitespace-nowrap overflow-hidden text-left">
-                <span style={{ textAlign: 'left' }}>
-                  {processName} → {destination}
+    <div className={`px-2 pb-2 ${index === 0 ? 'pt-2' : ''}`}>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={handleOpenDetail}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') handleOpenDetail()
+        }}
+        className="shadcn-card p-3 border border-divider hover:border-default-400 bg-content1 transition-all cursor-pointer select-none space-y-2.5"
+      >
+        {/* Top Line: App + Host + Actions */}
+        <div className="flex items-center justify-between gap-3 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {displayIcon && (
+              <div className="h-8 w-8 rounded-[5px] border border-divider bg-background flex items-center justify-center shrink-0 overflow-hidden">
+                <Avatar
+                  size="sm"
+                  radius="sm"
+                  src={iconUrl || fallbackIcon}
+                  showFallback
+                  fallback={
+                    <img src={fallbackIcon} alt="" className="w-full h-full object-cover" />
+                  }
+                  className="bg-transparent w-7 h-7"
+                />
+              </div>
+            )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-semibold text-foreground truncate">
+                  {destination}
+                </span>
+                <span className="text-xs text-default-400 font-mono shrink-0">
+                  :{info.metadata.destinationPort}
                 </span>
               </div>
-              <small className="ml-2 whitespace-nowrap text-foreground-500">{timeAgo}</small>
-              <Button
-                color={info.isActive ? 'warning' : 'danger'}
-                variant="light"
-                isIconOnly
-                size="sm"
-                className="absolute right-2 transform"
-                onPress={handleClose}
-              >
-                {info.isActive ? <CgClose className="text-lg" /> : <CgTrash className="text-lg" />}
-              </Button>
-            </CardHeader>
-            <CardFooter className="pt-2">
-              <div className="flex gap-1 overflow-x-auto no-scrollbar">
-                <Chip
-                  color={info.isActive ? 'primary' : 'danger'}
-                  size="sm"
-                  radius="sm"
-                  variant="dot"
-                >
-                  {info.metadata.type}({info.metadata.network.toUpperCase()})
-                </Chip>
-                <Chip
-                  className="flag-emoji whitespace-nowrap overflow-hidden"
-                  size="sm"
-                  radius="sm"
-                  variant="bordered"
-                >
-                  {info.chains[0]}
-                </Chip>
-                <Chip size="sm" radius="sm" variant="bordered">
-                  ↑ {uploadTraffic} ↓ {downloadTraffic}
-                </Chip>
-                {hasSpeed && (
-                  <Chip color="primary" size="sm" radius="sm" variant="bordered">
-                    ↑ {uploadSpeed || '0 B'}/s ↓ {downloadSpeed || '0 B'}/s
-                  </Chip>
-                )}
+              <div className="text-xs text-default-500 font-mono truncate">
+                {processName} • {info.metadata.type}({info.metadata.network.toUpperCase()}) •{' '}
+                {timeAgo}
               </div>
-            </CardFooter>
+            </div>
+          </div>
+
+          {/* Quick Action Toolbar */}
+          <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+            {/* 1-Click Route / Override Button */}
+            <Button
+              size="sm"
+              variant="flat"
+              className="h-7 px-2.5 text-xs font-medium border border-divider bg-background hover:bg-content2"
+              startContent={<LuCompass className="text-xs text-primary" />}
+              onPress={handleRouteClick}
+            >
+              Route
+            </Button>
+
+            {/* Inspect Detail Button */}
+            <Button
+              size="sm"
+              variant="light"
+              isIconOnly
+              className="h-7 w-7 min-w-0 p-0 text-default-400 hover:text-foreground"
+              onPress={handleOpenDetail}
+              title="Inspect connection details"
+            >
+              <LuInfo className="text-sm" />
+            </Button>
+
+            {/* Kill / Close Socket Button */}
+            <Button
+              size="sm"
+              variant="light"
+              isIconOnly
+              color={info.isActive ? 'warning' : 'danger'}
+              className="h-7 w-7 min-w-0 p-0"
+              onPress={handleClose}
+              title={info.isActive ? 'Close connection' : 'Remove connection'}
+            >
+              {info.isActive ? (
+                <CgClose className="text-base" />
+              ) : (
+                <CgTrash className="text-base" />
+              )}
+            </Button>
           </div>
         </div>
-      </Card>
+
+        {/* Bottom Line: Route Chain & Bandwidth Metrics */}
+        <div className="flex items-center justify-between gap-2 pt-1 border-t border-divider/60 flex-wrap">
+          <div className="flex items-center gap-1.5 min-w-0 overflow-x-auto no-scrollbar">
+            {/* Status Dot */}
+            <span
+              className={`h-2 w-2 rounded-full shrink-0 ${
+                info.isActive ? 'bg-emerald-500 ring-2 ring-emerald-500/20' : 'bg-default-400'
+              }`}
+            />
+
+            {/* Rule Match Pill */}
+            {info.rule && (
+              <span className="text-xs font-mono px-2 py-0.5 rounded-[4px] border border-divider bg-background text-default-600 truncate max-w-[200px]">
+                {info.rule}: {info.rulePayload || 'Match'}
+              </span>
+            )}
+
+            {/* Outbound Chain */}
+            <span
+              className={`text-xs font-medium px-2 py-0.5 rounded-[4px] border truncate max-w-[180px] flag-emoji ${
+                isDirect
+                  ? 'border-default-300 bg-background text-default-500'
+                  : 'border-primary/40 bg-primary/10 text-primary'
+              }`}
+            >
+              {info.chains.join(' → ') || 'Direct'}
+            </span>
+          </div>
+
+          {/* Traffic Counters */}
+          <div className="flex items-center gap-2.5 text-xs font-mono text-default-600 shrink-0">
+            <span>↓ {downloadTraffic}</span>
+            <span>↑ {uploadTraffic}</span>
+            {hasSpeed && (
+              <span className="text-primary font-semibold">
+                (↓{downloadSpeed || '0B'}/s ↑{uploadSpeed || '0B'}/s)
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -58,7 +58,7 @@ const OutboundModeSwitcher: React.FC<Props> = ({ iconOnly, expanded = false }: P
             className={mode === value ? 'font-bold' : ''}
             title={
               <span className="flex items-center">
-                <span className="sider-mode-icon">{value[0].toUpperCase()}</span>
+                <span className="sider-mode-icon">{value[0]}</span>
                 <span className="sider-item-label" aria-hidden={!expanded}>
                   {t(`sider.cards.outbound.${value}`)}
                 </span>

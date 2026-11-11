@@ -16,7 +16,11 @@ import {
   DEFAULT_USE_NAMESERVER_POLICY
 } from '../../../shared/appConfig'
 
-const DNS: React.FC = () => {
+interface DnsProps {
+  embedded?: boolean
+}
+
+const DNS: React.FC<DnsProps> = ({ embedded = false }) => {
   const { t } = useTranslation()
   const { controledMihomoConfig, patchControledMihomoConfig } = useControledMihomoConfig()
   const { appConfig, patchAppConfig } = useAppConfig()
@@ -184,57 +188,59 @@ const DNS: React.FC = () => {
     }
   }
 
-  return (
-    <BasePage
-      title={t('dns.title')}
-      header={
-        changed && (
-          <Button
-            size="sm"
-            className="app-nodrag"
-            color="primary"
-            onPress={() => {
-              const dnsConfig = {
-                enable: values.enable,
-                ipv6: values.ipv6,
-                'fake-ip-range': values.fakeIPRange,
-                'fake-ip-filter': values.fakeIPFilter,
-                'fake-ip-filter-mode': values.fakeIPFilterMode,
-                'enhanced-mode': values.enhancedMode,
-                'use-hosts': values.useHosts,
-                'use-system-hosts': values.useSystemHosts,
-                'respect-rules': values.respectRules,
-                'default-nameserver': values.defaultNameserver,
-                nameserver: values.nameserver,
-                'proxy-server-nameserver': values.proxyServerNameserver,
-                'direct-nameserver': values.directNameserver,
-                fallback: values.fallback,
-                'fallback-filter': {
-                  ...(values.fallbackGeoip ? { geoip: values.fallbackGeoip } : {}),
-                  'geoip-code': values.fallbackGeoipCode,
-                  ipcidr: values.fallbackIpcidr,
-                  domain: values.fallbackDomain
-                }
-              }
-              if (values.useNameserverPolicy) {
-                dnsConfig['nameserver-policy'] = Object.fromEntries(
-                  values.nameserverPolicy.map(({ domain, value }) => [domain, value])
-                )
-              }
-              const result = {
-                dns: dnsConfig,
-                hosts: values.useHosts
-                  ? Object.fromEntries(values.hosts.map(({ domain, value }) => [domain, value]))
-                  : {}
-              }
-              onSave(result)
-            }}
-          >
-            {isLocalActive || controlDns ? t('common.save') : t('dns.saveOnly')}
-          </Button>
-        )
-      }
+  const saveButton = changed ? (
+    <Button
+      size="sm"
+      className="app-nodrag"
+      color="primary"
+      onPress={() => {
+        const dnsConfig = {
+          enable: values.enable,
+          ipv6: values.ipv6,
+          'fake-ip-range': values.fakeIPRange,
+          'fake-ip-filter': values.fakeIPFilter,
+          'fake-ip-filter-mode': values.fakeIPFilterMode,
+          'enhanced-mode': values.enhancedMode,
+          'use-hosts': values.useHosts,
+          'use-system-hosts': values.useSystemHosts,
+          'respect-rules': values.respectRules,
+          'default-nameserver': values.defaultNameserver,
+          nameserver: values.nameserver,
+          'proxy-server-nameserver': values.proxyServerNameserver,
+          'direct-nameserver': values.directNameserver,
+          fallback: values.fallback,
+          'fallback-filter': {
+            ...(values.fallbackGeoip ? { geoip: values.fallbackGeoip } : {}),
+            'geoip-code': values.fallbackGeoipCode,
+            ipcidr: values.fallbackIpcidr,
+            domain: values.fallbackDomain
+          }
+        }
+        if (values.useNameserverPolicy) {
+          dnsConfig['nameserver-policy'] = Object.fromEntries(
+            values.nameserverPolicy.map(({ domain, value }) => [domain, value])
+          )
+        }
+        const result = {
+          dns: dnsConfig,
+          hosts: values.useHosts
+            ? Object.fromEntries(values.hosts.map(({ domain, value }) => [domain, value]))
+            : {}
+        }
+        onSave(result)
+      }}
     >
+      {isLocalActive || controlDns ? t('common.save') : t('dns.saveOnly')}
+    </Button>
+  ) : null
+
+  const content = (
+    <div className="flex flex-col gap-3 pb-6">
+      {embedded && saveButton && (
+        <div className="flex justify-end sticky top-0 z-10 bg-background/80 backdrop-blur py-2">
+          {saveButton}
+        </div>
+      )}
       <SettingCard>
         {!isLocalActive && (
           <SettingItem title={t('dns.enable')} divider>
@@ -512,6 +518,14 @@ const DNS: React.FC = () => {
           {renderListInputs('fallbackDomain', t('dns.fallbackFilter.domainPlaceholder'))}
         </div>
       </SettingCard>
+    </div>
+  )
+
+  return embedded ? (
+    <div className="h-full w-full overflow-y-auto px-4 py-2">{content}</div>
+  ) : (
+    <BasePage title={t('dns.title')} header={saveButton}>
+      {content}
     </BasePage>
   )
 }

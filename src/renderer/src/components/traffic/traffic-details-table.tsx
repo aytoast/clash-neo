@@ -101,28 +101,28 @@ const TrafficDetailsTable: React.FC<Props> = ({
           <thead className="sticky top-0 z-10 bg-content2/80">
             <tr>
               <th
-                className="cursor-pointer px-4 py-2 text-left font-semibold text-foreground/60 uppercase tracking-wide hover:text-foreground"
+                className="cursor-pointer px-4 py-2 text-left font-semibold text-foreground/60 tracking-wide hover:text-foreground"
                 onClick={() => handleSort('label')}
               >
                 {subColLabel}
                 <SortIcon field="label" />
               </th>
               <th
-                className="hidden cursor-pointer px-4 py-2 text-left font-semibold text-foreground/60 uppercase tracking-wide hover:text-foreground lg:table-cell"
+                className="hidden cursor-pointer px-4 py-2 text-left font-semibold text-foreground/60 tracking-wide hover:text-foreground lg:table-cell"
                 onClick={() => handleSort('upload')}
               >
                 {t('traffic.upload')}
                 <SortIcon field="upload" />
               </th>
               <th
-                className="hidden cursor-pointer px-4 py-2 text-left font-semibold text-foreground/60 uppercase tracking-wide hover:text-foreground lg:table-cell"
+                className="hidden cursor-pointer px-4 py-2 text-left font-semibold text-foreground/60 tracking-wide hover:text-foreground lg:table-cell"
                 onClick={() => handleSort('download')}
               >
                 {t('traffic.download')}
                 <SortIcon field="download" />
               </th>
               <th
-                className="cursor-pointer px-4 py-2 text-right font-semibold text-foreground/60 uppercase tracking-wide hover:text-foreground lg:text-left"
+                className="cursor-pointer px-4 py-2 text-right font-semibold text-foreground/60 tracking-wide hover:text-foreground lg:text-left"
                 onClick={() => handleSort('total')}
               >
                 {t('traffic.total')}

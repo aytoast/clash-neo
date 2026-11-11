@@ -88,6 +88,9 @@ async function ensureSupportedWindowsPowerShell(): Promise<boolean> {
 }
 
 configureAppPaths()
+if (!app.isPackaged) {
+  app.commandLine.appendSwitch('remote-debugging-port', '9222')
+}
 subscribeAppConfig((config) => setTrafficUsageEnabled(config.enableTrafficLogger === true))
 
 const mainLogger = createLogger('Main')

@@ -12,18 +12,27 @@ const SettingCard: React.FC<Props> = (props) => {
   const [isOpen, setIsOpen] = useState(false)
 
   return !props.title ? (
-    <Card className={`${props.className} m-2`}>
-      <CardBody>{props.children}</CardBody>
+    <Card
+      shadow="none"
+      radius="sm"
+      className={`${props.className ?? ''} m-2 border border-divider bg-content1`}
+    >
+      <CardBody className="p-3.5">{props.children}</CardBody>
     </Card>
   ) : (
     <Accordion
       isCompact
-      className={`${props.className} my-2`}
+      className={`${props.className ?? ''} my-2 mx-2 px-0`}
       variant="splitted"
+      itemClasses={{
+        base: 'border border-divider bg-content1 rounded-[6px] shadow-none px-3.5',
+        title: 'text-sm font-semibold text-foreground',
+        trigger: 'py-2.5',
+        content: 'pt-1 pb-3'
+      }}
       onSelectionChange={(keys) => {
         setIsOpen(keys instanceof Set ? keys.size > 0 : false)
       }}
-      {...props}
     >
       <AccordionItem
         className="data-[open=true]:pb-2"
@@ -32,9 +41,9 @@ const SettingCard: React.FC<Props> = (props) => {
         textValue={props.title}
         title={
           <div className="flex justify-between items-center w-full">
-            <span>{props.title}</span>
+            <span className="text-sm font-medium tracking-tight">{props.title}</span>
             <IoIosArrowBack
-              className={`transition duration-200 ml-2 h-8 text-lg text-foreground-500 ${isOpen ? '-rotate-90' : ''}`}
+              className={`transition duration-200 ml-2 h-6 text-base text-foreground-500 ${isOpen ? '-rotate-90' : ''}`}
             />
           </div>
         }

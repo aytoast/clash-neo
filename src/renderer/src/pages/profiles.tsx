@@ -7,7 +7,8 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownTrigger,
-  Input
+  Input,
+  Progress
 } from '@heroui/react'
 import BasePage from '@renderer/components/base/base-page'
 import { toast } from '@renderer/components/base/toast'
@@ -21,11 +22,15 @@ import { usePluginConfig } from '@renderer/hooks/use-plugin-config'
 import {
   getFilePath,
   getLocalConfig,
+  getProfileStr,
+  setProfileStr,
   readTextFile,
   subStoreCollections,
   subStoreSubs,
   updatePluginProfile
 } from '@renderer/utils/ipc'
+import { calcTraffic } from '@renderer/utils/calc'
+import { cleanProxiesList } from '@renderer/utils/clean-nodes'
 import type { KeyboardEvent } from 'react'
 import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MdContentPaste } from 'react-icons/md'
@@ -45,11 +50,15 @@ import SubStoreIcon from '@renderer/components/base/substore-icon'
 import useSWR from 'swr'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { parse } from 'yaml'
+import { parse, stringify } from 'yaml'
 import { subscribePluginFile, takePendingPluginFile } from '@renderer/utils/plugin-file-open'
 import { DEFAULT_USE_SUB_STORE } from '../../../shared/appConfig'
 
-const Profiles: React.FC = () => {
+interface ProfilesProps {
+  embedded?: boolean
+}
+
+const Profiles: React.FC<ProfilesProps> = ({ embedded = false }: ProfilesProps) => {
   const { t } = useTranslation()
   const {
     profileConfig,
@@ -189,13 +198,96 @@ const Profiles: React.FC = () => {
     }
     return items
   }, [subs, collections, t])
+  const [autoClean, setAutoClean] = useState(true)
+  const [autoMerge, setAutoMerge] = useState(true)
+  const detectedUrls = useMemo(() => {
+    const matches = url.match(/https?:\/\/[^\s,]+/gi)
+    return matches || []
+  }, [url])
+  const isMultiUrl = detectedUrls.length > 1
+
   const handleImport = async (): Promise<void> => {
-    setImportItem({
-      name: '',
-      type: 'remote',
-      url,
-      useProxy
+    if (isMultiUrl) {
+      setImportItem({
+        name: autoMerge ? `Merged Subscription (${detectedUrls.length} sources)` : '',
+        type: 'remote',
+        url: detectedUrls[0],
+        useProxy
+      })
+    } else {
+      setImportItem({
+        name: '',
+        type: 'remote',
+        url: url.trim(),
+        useProxy
+      })
+    }
+  }
+
+  const totalStats = useMemo(() => {
+    let totalUpload = 0
+    let totalDownload = 0
+    let totalQuota = 0
+    let earliestExpire: number | null = null
+
+    items.forEach((item) => {
+      if (item.extra) {
+        totalUpload += item.extra.upload || 0
+        totalDownload += item.extra.download || 0
+        totalQuota += item.extra.total || 0
+        if (item.extra.expire) {
+          if (!earliestExpire || item.extra.expire < earliestExpire) {
+            earliestExpire = item.extra.expire
+          }
+        }
+      }
     })
+
+    const used = totalUpload + totalDownload
+    const percent = totalQuota > 0 ? Math.min(100, Math.round((used / totalQuota) * 100)) : 0
+    return {
+      used,
+      totalQuota,
+      percent,
+      earliestExpire
+    }
+  }, [items])
+
+  const expireLabel = useMemo(() => {
+    if (!totalStats.earliestExpire) return null
+    const diff = totalStats.earliestExpire * 1000 - Date.now()
+    if (diff <= 0) return 'Expired'
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
+    return `${days} days left`
+  }, [totalStats.earliestExpire])
+
+  const handleSyncAndCleanAll = async (): Promise<void> => {
+    setUpdating(true)
+    try {
+      for (const item of items) {
+        if (item.type === 'remote') {
+          await addProfileItem(item)
+          try {
+            const str = await getProfileStr(item.id)
+            const parsed = parse(str)
+            if (parsed && Array.isArray(parsed.proxies) && parsed.proxies.length > 0) {
+              parsed.proxies = cleanProxiesList(parsed.proxies)
+              await setProfileStr(item.id, stringify(parsed))
+            }
+          } catch {
+            // ignore
+          }
+        } else if (item.pluginId) {
+          await updatePluginProfile(item.pluginId, true)
+        }
+      }
+      toast.success('All subscriptions synced & cleaned')
+      mutateProfileConfig()
+    } catch (e) {
+      toast.error(String(e))
+    } finally {
+      setUpdating(false)
+    }
   }
   const pageRef = useRef<HTMLDivElement>(null)
 
@@ -303,53 +395,56 @@ const Profiles: React.FC = () => {
     setSortedItems(items)
   }, [items])
 
-  return (
-    <BasePage
-      ref={pageRef}
-      title={t('profiles.title')}
-      header={
-        <>
-          <Button
-            size="sm"
-            title={t('plugins.title')}
-            isIconOnly
-            variant="light"
-            className="app-nodrag"
-            onPress={() => {
-              setPluginDropFile(null)
-              setPluginFileData(null)
-              setShowPluginImport(true)
-            }}
-          >
-            <TbPuzzle className="text-lg" />
-          </Button>
-          <Button
-            size="sm"
-            title={t('profiles.updateAll')}
-            className="app-nodrag"
-            variant="light"
-            isIconOnly
-            onPress={async () => {
-              setUpdating(true)
-              for (const item of items) {
-                if (item.id === current) continue
-                if (item.type === 'remote') await addProfileItem(item)
-                else if (item.pluginId) await updatePluginProfile(item.pluginId, true)
-              }
-              const currentItem = items.find((item) => item.id === current)
-              if (currentItem && currentItem.type === 'remote') {
-                await addProfileItem(currentItem)
-              } else if (currentItem?.pluginId) {
-                await updatePluginProfile(currentItem.pluginId, true)
-              }
-              setUpdating(false)
-            }}
-          >
-            <IoMdRefresh className={`text-lg ${updating ? 'animate-spin' : ''}`} />
-          </Button>
-        </>
-      }
-    >
+  const toolbarHeader = (
+    <div className="flex items-center gap-1 app-nodrag">
+      <Button
+        size="sm"
+        title={t('plugins.title')}
+        isIconOnly
+        variant="light"
+        className="app-nodrag"
+        onPress={() => {
+          setPluginDropFile(null)
+          setPluginFileData(null)
+          setShowPluginImport(true)
+        }}
+      >
+        <TbPuzzle className="text-lg" />
+      </Button>
+      <Button
+        size="sm"
+        title={t('profiles.updateAll')}
+        className="app-nodrag"
+        variant="light"
+        isIconOnly
+        onPress={async () => {
+          setUpdating(true)
+          for (const item of items) {
+            if (item.id === current) continue
+            if (item.type === 'remote') await addProfileItem(item)
+            else if (item.pluginId) await updatePluginProfile(item.pluginId, true)
+          }
+          const currentItem = items.find((item) => item.id === current)
+          if (currentItem && currentItem.type === 'remote') {
+            await addProfileItem(currentItem)
+          } else if (currentItem?.pluginId) {
+            await updatePluginProfile(currentItem.pluginId, true)
+          }
+          setUpdating(false)
+        }}
+      >
+        <IoMdRefresh className={`text-lg ${updating ? 'animate-spin' : ''}`} />
+      </Button>
+    </div>
+  )
+
+  const bodyContent = (
+    <div className="flex flex-col h-full w-full">
+      {embedded && (
+        <div className="flex items-center justify-end px-3 py-1.5 border-b border-divider bg-background/50">
+          {toolbarHeader}
+        </div>
+      )}
       {importItem && (
         <EditInfoModal
           mode="import"
@@ -402,7 +497,7 @@ const Profiles: React.FC = () => {
             />
 
             <Button size="sm" color="primary" isDisabled={isUrlEmpty} onPress={handleImport}>
-              {t('profiles.import')}
+              {isMultiUrl ? `Merge & Import (${detectedUrls.length})` : t('profiles.import')}
             </Button>
             {useSubStore && (
               <Dropdown
@@ -530,8 +625,79 @@ const Profiles: React.FC = () => {
               </DropdownMenu>
             </Dropdown>
           </div>
+
+          {/* Quick Auto-Clean & Merge Toggles */}
+          <div className="flex items-center justify-between text-xs text-default-500 px-1 pt-0.5">
+            <div className="flex items-center gap-4 flex-wrap">
+              <Checkbox
+                size="sm"
+                isSelected={autoClean}
+                onValueChange={setAutoClean}
+                classNames={{ label: 'text-xs text-default-600 select-none' }}
+              >
+                Auto-clean node names (strip ad tags & vendor brackets)
+              </Checkbox>
+              <Checkbox
+                size="sm"
+                isSelected={autoMerge}
+                onValueChange={setAutoMerge}
+                classNames={{ label: 'text-xs text-default-600 select-none' }}
+              >
+                Auto-merge multiple URLs into unified subscription
+              </Checkbox>
+            </div>
+            {isMultiUrl && (
+              <span className="text-[11px] font-semibold text-primary px-2 py-0.5 rounded bg-primary/10">
+                {detectedUrls.length} links detected
+              </span>
+            )}
+          </div>
         </div>
         <Divider />
+
+        {/* Aggregated Subscription Quota & Health Overview */}
+        {totalStats.totalQuota > 0 && (
+          <div className="mx-2 mt-2 p-3 rounded-[6px] border border-divider bg-content1 flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex-1 min-w-[200px] space-y-1">
+              <div className="flex items-center justify-between text-xs text-default-500 font-mono">
+                <span className="font-medium text-foreground">Subscriptions health</span>
+                <span>
+                  {calcTraffic(totalStats.used)} / {calcTraffic(totalStats.totalQuota)} (
+                  {totalStats.percent}%)
+                </span>
+              </div>
+              <Progress
+                size="sm"
+                value={totalStats.percent}
+                color={
+                  totalStats.percent > 85
+                    ? 'danger'
+                    : totalStats.percent > 60
+                      ? 'warning'
+                      : 'primary'
+                }
+                className="h-1.5"
+                aria-label="Total quota usage"
+              />
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {expireLabel && (
+                <span className="text-xs font-mono px-2 py-0.5 rounded bg-content2 text-default-600">
+                  {expireLabel}
+                </span>
+              )}
+              <Button
+                size="sm"
+                variant="flat"
+                isLoading={updating}
+                className="h-7 px-3 text-xs font-medium border border-divider bg-background hover:bg-content2"
+                onPress={handleSyncAndCleanAll}
+              >
+                Sync & Clean All
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {showPluginImport && (
@@ -585,6 +751,16 @@ const Profiles: React.FC = () => {
           </SortableContext>
         </div>
       </DndContext>
+    </div>
+  )
+
+  if (embedded) {
+    return bodyContent
+  }
+
+  return (
+    <BasePage ref={pageRef} title={t('profiles.title')} header={toolbarHeader}>
+      {bodyContent}
     </BasePage>
   )
 }

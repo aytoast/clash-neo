@@ -28,7 +28,11 @@ import { HiOutlineDocumentText } from 'react-icons/hi'
 import { RiArchiveLine } from 'react-icons/ri'
 import { useTranslation } from 'react-i18next'
 
-const Override: React.FC = () => {
+interface OverrideProps {
+  embedded?: boolean
+}
+
+const Override: React.FC<OverrideProps> = ({ embedded = false }: OverrideProps) => {
   const { t } = useTranslation()
   const {
     overrideConfig,
@@ -148,39 +152,42 @@ const Override: React.FC = () => {
     setSortedItems(items)
   }, [items])
 
-  return (
-    <BasePage
-      ref={pageRef}
-      title={t('override.title')}
-      header={
-        <>
-          <Button
-            size="sm"
-            variant="light"
-            title={t('override.docs')}
-            isIconOnly
-            className="app-nodrag"
-            onPress={() => {
-              open('https://clashparty.org/docs/guide/override')
-            }}
-          >
-            <HiOutlineDocumentText className="text-lg" />
-          </Button>
-          <Button
-            className="app-nodrag"
-            title={t('override.repository')}
-            isIconOnly
-            variant="light"
-            size="sm"
-            onPress={() => {
-              open('https://github.com/mihomo-party-org/override-hub')
-            }}
-          >
-            <RiArchiveLine className="text-lg" />
-          </Button>
-        </>
-      }
-    >
+  const toolbarHeader = (
+    <div className="flex items-center gap-1 app-nodrag">
+      <Button
+        size="sm"
+        variant="light"
+        title={t('override.docs')}
+        isIconOnly
+        className="app-nodrag"
+        onPress={() => {
+          open('https://clashparty.org/docs/guide/override')
+        }}
+      >
+        <HiOutlineDocumentText className="text-lg" />
+      </Button>
+      <Button
+        className="app-nodrag"
+        title={t('override.repository')}
+        isIconOnly
+        variant="light"
+        size="sm"
+        onPress={() => {
+          open('https://github.com/mihomo-party-org/override-hub')
+        }}
+      >
+        <RiArchiveLine className="text-lg" />
+      </Button>
+    </div>
+  )
+
+  const bodyContent = (
+    <div className="flex flex-col h-full w-full">
+      {embedded && (
+        <div className="flex items-center justify-end px-3 py-1.5 border-b border-divider bg-background/50">
+          {toolbarHeader}
+        </div>
+      )}
       <div className="sticky top-0 z-40 bg-background">
         <div className="flex p-2">
           <Input
@@ -284,6 +291,16 @@ const Override: React.FC = () => {
           </SortableContext>
         </div>
       </DndContext>
+    </div>
+  )
+
+  if (embedded) {
+    return bodyContent
+  }
+
+  return (
+    <BasePage ref={pageRef} title={t('override.title')} header={toolbarHeader}>
+      {bodyContent}
     </BasePage>
   )
 }

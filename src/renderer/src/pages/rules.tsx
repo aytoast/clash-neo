@@ -2,7 +2,7 @@ import BasePage from '@renderer/components/base/base-page'
 import RuleItem from '@renderer/components/rules/rule-item'
 import { Virtuoso } from 'react-virtuoso'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Button, Divider, Input, Spinner } from '@heroui/react'
+import { Button, Input, Spinner } from '@heroui/react'
 import { useRules } from '@renderer/hooks/use-rules'
 import { includesIgnoreCase } from '@renderer/utils/includes'
 import { useTranslation } from 'react-i18next'
@@ -34,9 +34,16 @@ import type { LocalRuleEditor } from '../../../shared/local-config'
 
 const RULES_FILTER_KEY = 'rules-filter'
 
-const Rules: React.FC = () => {
+type RulePriorityFilter = 'all' | 'custom' | 'provider'
+
+interface RulesProps {
+  embedded?: boolean
+}
+
+const Rules: React.FC<RulesProps> = ({ embedded = false }: RulesProps) => {
   const { rules, mutate } = useRules()
   const [filter, setFilter] = useState(() => localStorage.getItem(RULES_FILTER_KEY) || '')
+  const [priorityFilter, setPriorityFilter] = useState<RulePriorityFilter>('all')
   const { t } = useTranslation()
   const { isLocalActive: localMode } = useActiveProfile()
   const [editMode, setEditMode] = useState(false)
@@ -122,45 +129,78 @@ const Rules: React.FC = () => {
     localStorage.setItem(RULES_FILTER_KEY, filter)
   }, [filter])
 
-  const filteredRules = useMemo<IMihomoRulesDetail[]>(() => {
-    const entries = editing
-      ? (data?.rules || []).map((rule, index) => {
-          const parsed = parseLocalRule(rule)
-          return {
-            index,
-            type: parsed.type,
-            payload: parsed.payload || parsed.type,
-            proxy: parsed.target,
-            size: -1
-          }
-        })
-      : rules?.rules || []
-    if (filter === '') return entries
-    return entries.filter((rule) => {
-      return (
-        includesIgnoreCase(rule.payload, filter) ||
-        includesIgnoreCase(rule.type, filter) ||
-        includesIgnoreCase(rule.proxy, filter)
-      )
-    })
-  }, [rules, filter, editing, data])
+  const allRules = useMemo<IMihomoRulesDetail[]>(() => {
+    if (editing) {
+      return (data?.rules || []).map((rule, index) => {
+        const parsed = parseLocalRule(rule)
+        return {
+          index,
+          type: parsed.type,
+          payload: parsed.payload || parsed.type,
+          proxy: parsed.target,
+          size: -1
+        }
+      })
+    }
+    return rules?.rules || []
+  }, [rules, editing, data])
 
-  return (
-    <BasePage
-      title={t('rules.title')}
-      header={
-        localMode ? (
-          <EditModeMenu
-            enabled={editing}
-            disabled={savingOrder}
-            onChange={(enabled) => {
-              setEditMode(enabled)
-              setEditor(undefined)
-            }}
-          />
-        ) : undefined
-      }
-    >
+  const filteredRules = useMemo<IMihomoRulesDetail[]>(() => {
+    let result = allRules
+
+    if (priorityFilter === 'custom') {
+      result = result.filter(() => editing)
+    } else if (priorityFilter === 'provider') {
+      result = result.filter(() => !editing)
+    }
+
+    if (filter !== '') {
+      result = result.filter((rule) => {
+        return (
+          includesIgnoreCase(rule.payload, filter) ||
+          includesIgnoreCase(rule.type, filter) ||
+          includesIgnoreCase(rule.proxy, filter)
+        )
+      })
+    }
+    return result
+  }, [allRules, priorityFilter, filter, editing])
+
+  const customCount = editing ? (data?.rules?.length ?? 0) : 0
+  const providerCount = editing ? 0 : (rules?.rules?.length ?? 0)
+
+  const toolbarHeader = localMode ? (
+    <div className="flex items-center gap-2 app-nodrag">
+      <Button
+        size="sm"
+        color="primary"
+        className="h-7 px-2.5 text-xs font-medium"
+        startContent={<MdAdd className="text-sm" />}
+        onPress={() => {
+          if (!editMode) setEditMode(true)
+          open(null, 0)
+        }}
+      >
+        Add Rule
+      </Button>
+      <EditModeMenu
+        enabled={editing}
+        disabled={savingOrder}
+        onChange={(enabled) => {
+          setEditMode(enabled)
+          setEditor(undefined)
+        }}
+      />
+    </div>
+  ) : undefined
+
+  const bodyContent = (
+    <div className="flex flex-col h-full w-full">
+      {embedded && toolbarHeader && (
+        <div className="flex items-center justify-end px-3 py-1.5 border-b border-divider bg-background/50">
+          {toolbarHeader}
+        </div>
+      )}
       {editing && editor && (
         <RuleEditorModal
           index={editor.index}
@@ -170,17 +210,74 @@ const Rules: React.FC = () => {
           onSaved={saved}
         />
       )}
-      <div className="sticky top-0 z-40 bg-background">
-        <div className="flex p-2">
+      <div className="sticky top-0 z-40 bg-background border-b border-divider">
+        {/* Priority Evaluation Chain Banner */}
+        <div className="px-3 pt-2 pb-1.5 flex items-center justify-between gap-2 text-xs text-default-500 border-b border-divider/40">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-semibold text-foreground/80">Priority order:</span>
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 font-medium">
+              1. Custom Overrides (P1)
+            </span>
+            <span>&rarr;</span>
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
+              2. Provider Defaults (P2)
+            </span>
+            <span>&rarr;</span>
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-default-200/50 text-default-600 font-medium">
+              3. Match Fallback
+            </span>
+          </div>
+          <div className="text-default-400 font-mono text-[11px] shrink-0">
+            {allRules.length} rules loaded
+          </div>
+        </div>
+
+        {/* Search & Priority Filter Controls */}
+        <div className="p-2 flex items-center gap-2">
           <Input
             size="sm"
             value={filter}
             placeholder={t('rules.filter')}
             isClearable
             onValueChange={setFilter}
+            className="flex-1"
           />
+          <div className="inline-flex items-center gap-1 p-0.5 rounded-[5px] border border-divider bg-content1 shrink-0 text-xs">
+            <button
+              type="button"
+              onClick={() => setPriorityFilter('all')}
+              className={`px-2.5 py-1 rounded-[4px] font-medium transition-colors ${
+                priorityFilter === 'all'
+                  ? 'bg-background text-foreground shadow-xs'
+                  : 'text-default-500 hover:text-foreground'
+              }`}
+            >
+              All ({allRules.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setPriorityFilter('custom')}
+              className={`px-2.5 py-1 rounded-[4px] font-medium transition-colors ${
+                priorityFilter === 'custom'
+                  ? 'bg-background text-amber-500 font-semibold shadow-xs'
+                  : 'text-default-500 hover:text-foreground'
+              }`}
+            >
+              Custom ({customCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setPriorityFilter('provider')}
+              className={`px-2.5 py-1 rounded-[4px] font-medium transition-colors ${
+                priorityFilter === 'provider'
+                  ? 'bg-background text-primary font-semibold shadow-xs'
+                  : 'text-default-500 hover:text-foreground'
+              }`}
+            >
+              Provider ({providerCount})
+            </button>
+          </div>
         </div>
-        <Divider />
       </div>
       {editing ? (
         <>
@@ -211,7 +308,7 @@ const Rules: React.FC = () => {
               items={filteredRules.map((rule) => `rule:${rule.index}`)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="py-3">
+              <div className="py-2">
                 {data?.rules.length === 0 && (
                   <div className="relative h-8">{renderInsertion(0, true)}</div>
                 )}
@@ -224,6 +321,7 @@ const Rules: React.FC = () => {
                     >
                       <RuleItem
                         {...rule}
+                        priority="custom"
                         onEdit={() => open(rule.index)}
                         onDelete={
                           data && !savingOrder
@@ -246,7 +344,7 @@ const Rules: React.FC = () => {
           </DndContext>
         </>
       ) : (
-        <div className="h-[calc(100vh-100px)] mt-px">
+        <div className="h-[calc(100vh-140px)] mt-px">
           <Virtuoso
             data={filteredRules}
             itemContent={(i, rule) => (
@@ -257,11 +355,22 @@ const Rules: React.FC = () => {
                 proxy={rule.proxy}
                 size={rule.size}
                 extra={rule.extra}
+                priority={rule.type === 'MATCH' ? 'match' : 'provider'}
               />
             )}
           />
         </div>
       )}
+    </div>
+  )
+
+  if (embedded) {
+    return bodyContent
+  }
+
+  return (
+    <BasePage title={t('rules.title')} header={toolbarHeader}>
+      {bodyContent}
     </BasePage>
   )
 }

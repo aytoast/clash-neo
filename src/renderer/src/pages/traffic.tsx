@@ -39,7 +39,11 @@ function getTimeRange(range: TimeRange): { start: number; end: number; bucketSiz
   return { start: end - ms[range], end, bucketSizeMs: bucket[range] }
 }
 
-const TrafficPage: React.FC = () => {
+interface TrafficPageProps {
+  embedded?: boolean
+}
+
+const TrafficPage: React.FC<TrafficPageProps> = ({ embedded = false }) => {
   const { t } = useTranslation()
   const [activeView, setActiveView] = useState<DataUsageType>('host')
   const [timeRange, setTimeRange] = useState<TimeRange>('24h')
@@ -204,36 +208,35 @@ const TrafficPage: React.FC = () => {
     process: t('traffic.view.process')
   }
 
-  return (
-    <BasePage
-      title={t('sider.cards.traffic')}
-      header={
-        <div className="app-nodrag flex items-center gap-2">
-          <Tabs
-            size="sm"
-            selectedKey={timeRange}
-            onSelectionChange={(k) => setTimeRange(k as TimeRange)}
-          >
-            {TIME_RANGES.map((r) => (
-              <Tab key={r} title={timeRangeLabel[r]} />
-            ))}
-          </Tabs>
-          <Button
-            size="sm"
-            variant="light"
-            color="danger"
-            isIconOnly
-            title={t('traffic.clearAll')}
-            onPress={handleClearAll}
-          >
-            <CgTrash className="text-[16px]" />
-          </Button>
-        </div>
-      }
-    >
-      <div className="flex flex-col gap-3 p-2">
-        {/* Summary stats */}
-        <div className="grid grid-cols-4 gap-2">
+  const headerControls = (
+    <div className="app-nodrag flex items-center gap-2">
+      <Tabs
+        size="sm"
+        selectedKey={timeRange}
+        onSelectionChange={(k) => setTimeRange(k as TimeRange)}
+      >
+        {TIME_RANGES.map((r) => (
+          <Tab key={r} title={timeRangeLabel[r]} />
+        ))}
+      </Tabs>
+      <Button
+        size="sm"
+        variant="light"
+        color="danger"
+        isIconOnly
+        title={t('traffic.clearAll')}
+        onPress={handleClearAll}
+      >
+        <CgTrash className="text-[16px]" />
+      </Button>
+    </div>
+  )
+
+  const bodyContent = (
+    <div className="flex flex-col gap-3 p-2">
+      {/* Summary stats */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="grid grid-cols-4 gap-2 flex-1 min-w-[320px]">
           {[
             { label: t('traffic.sessions'), value: totalStats.count.toString() },
             { label: t('traffic.upload'), value: calcTraffic(totalStats.upload) },
@@ -242,56 +245,65 @@ const TrafficPage: React.FC = () => {
           ].map(({ label, value }) => (
             <div
               key={label}
-              className="flex flex-col items-center rounded-xl border border-foreground/10 bg-content1 py-3 shadow-sm"
+              className="flex flex-col items-center rounded-xl border border-divider bg-content1 py-2.5 shadow-sm"
             >
-              <span className="text-[11px] text-foreground/50 uppercase tracking-wide">
-                {label}
-              </span>
-              <span className="mt-0.5 text-sm font-bold text-foreground">{value}</span>
+              <span className="text-[11px] text-foreground/50 tracking-wide">{label}</span>
+              <span className="mt-0.5 text-sm font-semibold text-foreground">{value}</span>
             </div>
           ))}
         </div>
-
-        {/* View tabs */}
-        <Tabs
-          size="sm"
-          selectedKey={activeView}
-          onSelectionChange={(k) => setActiveView(k as DataUsageType)}
-        >
-          {(Object.keys(viewLabels) as DataUsageType[]).map((v) => (
-            <Tab key={v} title={viewLabels[v]} />
-          ))}
-        </Tabs>
-
-        {/* Rankings + Chart */}
-        <div className="grid grid-cols-4 gap-3">
-          <div className="col-span-1 h-52 overflow-hidden rounded-xl border border-foreground/10 bg-content1 p-3 shadow-sm">
-            <TrafficRankings
-              title={viewLabels[activeView]}
-              data={rankings}
-              selectedRow={selectedRow}
-              onSelect={handleSelectRow}
-            />
-          </div>
-          <div className="col-span-3 h-52 overflow-hidden rounded-xl border border-foreground/10 bg-content1 p-3 shadow-sm">
-            <TrafficTrendChart data={trendData} bucketSizeMs={bucketSizeMs} />
-          </div>
-        </div>
-
-        {/* Detail table */}
-        {selectedRow && (
-          <TrafficDetailsTable
-            selectedRow={selectedRow}
-            activeView={activeView}
-            subStats={subStats}
-            proxyStatsMap={proxyStatsMap}
-            selectedSubRow={selectedSubRow}
-            onSubRowClick={handleSubRowClick}
-            isLoading={detailLoading}
-            expandingKey={expandingKey}
-          />
-        )}
+        {embedded && headerControls}
       </div>
+
+      {/* View tabs */}
+      <Tabs
+        size="sm"
+        selectedKey={activeView}
+        onSelectionChange={(k) => setActiveView(k as DataUsageType)}
+      >
+        {(Object.keys(viewLabels) as DataUsageType[]).map((v) => (
+          <Tab key={v} title={viewLabels[v]} />
+        ))}
+      </Tabs>
+
+      {/* Rankings + Chart */}
+      <div className="grid grid-cols-4 gap-3">
+        <div className="col-span-1 h-56 overflow-hidden rounded-xl border border-divider bg-content1 p-3 shadow-sm">
+          <TrafficRankings
+            title={viewLabels[activeView]}
+            data={rankings}
+            selectedRow={selectedRow}
+            onSelect={handleSelectRow}
+          />
+        </div>
+        <div className="col-span-3 h-56 overflow-hidden rounded-xl border border-divider bg-content1 p-3 shadow-sm">
+          <TrafficTrendChart data={trendData} bucketSizeMs={bucketSizeMs} />
+        </div>
+      </div>
+
+      {/* Detail table */}
+      {selectedRow && (
+        <TrafficDetailsTable
+          selectedRow={selectedRow}
+          activeView={activeView}
+          subStats={subStats}
+          proxyStatsMap={proxyStatsMap}
+          selectedSubRow={selectedSubRow}
+          onSubRowClick={handleSubRowClick}
+          isLoading={detailLoading}
+          expandingKey={expandingKey}
+        />
+      )}
+    </div>
+  )
+
+  if (embedded) {
+    return bodyContent
+  }
+
+  return (
+    <BasePage title={t('sider.cards.traffic')} header={headerControls}>
+      {bodyContent}
     </BasePage>
   )
 }

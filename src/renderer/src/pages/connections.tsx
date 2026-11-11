@@ -1,16 +1,12 @@
 import { useConnectionApps, connectionAppKey } from '@renderer/hooks/use-connection-apps'
 import BasePage from '@renderer/components/base/base-page'
 import { mihomoCloseAllConnections, mihomoCloseConnection } from '@renderer/utils/ipc'
-import { Key, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Badge,
   Button,
-  Divider,
   Input,
   Select,
   SelectItem,
-  Tab,
-  Tabs,
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
@@ -25,6 +21,7 @@ import ConnectionTable, {
 import { Virtuoso } from 'react-virtuoso'
 import dayjs from '@renderer/utils/dayjs'
 import ConnectionDetailModal from '@renderer/components/connections/connection-detail-modal'
+import QuickRouteModal from '@renderer/components/connections/quick-route-modal'
 import { CgClose, CgTrash } from 'react-icons/cg'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { HiSortAscending, HiSortDescending } from 'react-icons/hi'
@@ -38,7 +35,11 @@ import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-c
 let cachedConnections: IMihomoConnectionDetail[] = []
 const CONNECTIONS_FILTER_KEY = 'connections-filter'
 
-const Connections: React.FC = () => {
+interface ConnectionsProps {
+  embedded?: boolean
+}
+
+const Connections: React.FC<ConnectionsProps> = ({ embedded = false }: ConnectionsProps) => {
   const { t } = useTranslation()
   const { controledMihomoConfig } = useControledMihomoConfig()
   const { 'find-process-mode': findProcessMode = 'always' } = controledMihomoConfig || {}
@@ -71,6 +72,22 @@ const Connections: React.FC = () => {
   const [isPaused, setIsPaused] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'table'>(connectionViewMode)
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(connectionTableColumns))
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'proxied' | 'direct'>('all')
+  const [selectedApp, setSelectedApp] = useState<string | null>(null)
+  const [quickRouteConn, setQuickRouteConn] = useState<IMihomoConnectionDetail | null>(null)
+
+  const topApps = useMemo(() => {
+    const counts = new Map<string, number>()
+    const currentList = tab === 'active' ? activeConnections : closedConnections
+    currentList.forEach((c) => {
+      const name = c.metadata.process?.replace(/\.exe$/, '') || c.metadata.sourceIP
+      if (name) counts.set(name, (counts.get(name) || 0) + 1)
+    })
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([name]) => name)
+  }, [tab, activeConnections, closedConnections])
 
   const activeConnectionsRef = useRef(activeConnections)
   const allConnectionsRef = useRef(allConnections)
@@ -121,13 +138,26 @@ const Connections: React.FC = () => {
   const filteredConnections = useMemo(() => {
     const connections = tab === 'active' ? activeConnections : closedConnections
 
-    const filtered =
+    let filtered =
       filter === ''
         ? connections
         : connections.filter((connection) => {
             const raw = JSON.stringify(connection)
             return includesIgnoreCase(raw, filter)
           })
+
+    if (categoryFilter === 'proxied') {
+      filtered = filtered.filter((c) => c.chains[0]?.toUpperCase() !== 'DIRECT')
+    } else if (categoryFilter === 'direct') {
+      filtered = filtered.filter((c) => c.chains[0]?.toUpperCase() === 'DIRECT')
+    }
+
+    if (selectedApp) {
+      filtered = filtered.filter((c) => {
+        const name = c.metadata.process?.replace(/\.exe$/, '') || c.metadata.sourceIP
+        return name === selectedApp
+      })
+    }
 
     if (viewMode === 'list' && connectionOrderBy) {
       return [...filtered].sort((a, b) => {
@@ -159,6 +189,8 @@ const Connections: React.FC = () => {
     closedConnections,
     tab,
     filter,
+    categoryFilter,
+    selectedApp,
     connectionDirection,
     connectionOrderBy,
     viewMode
@@ -286,6 +318,7 @@ const Connections: React.FC = () => {
           displayIcon={displayIcon && findProcessMode !== 'off'}
           displayName={displayName}
           close={closeConnection}
+          onOpenQuickRoute={(c) => setQuickRouteConn(c)}
           index={i}
           key={connection.id}
           info={connection}
@@ -295,214 +328,282 @@ const Connections: React.FC = () => {
     [displayIcon, connectionApps, selected, closeConnection, findProcessMode, displayAppName]
   )
 
-  return (
-    <BasePage
-      title={t('connections.title')}
-      header={
-        <div className="flex">
-          <div className="flex items-center">
-            <span className="mx-1 text-gray-400">
-              ↑ {calcTraffic(connectionsInfo?.uploadTotal ?? 0)}{' '}
-            </span>
-            <span className="mx-1 text-gray-400">
-              ↓ {calcTraffic(connectionsInfo?.downloadTotal ?? 0)}{' '}
-            </span>
-          </div>
-          <Badge
-            className="app-nodrag pointer-events-none mt-2"
-            color="primary"
-            variant="flat"
-            showOutline={false}
-            content={filteredConnections.length}
-          >
-            <Button
-              className="app-nodrag ml-1"
-              title={
-                viewMode === 'list'
-                  ? t('connections.table.switchToTable')
-                  : t('connections.table.switchToList')
-              }
-              isIconOnly
-              size="sm"
-              variant="light"
-              onPress={async () => {
-                const newMode = viewMode === 'list' ? 'table' : 'list'
-                setViewMode(newMode)
-                await patchAppConfig({ connectionViewMode: newMode })
-              }}
-            >
-              {viewMode === 'list' ? (
-                <MdTableChart className="text-lg" />
-              ) : (
-                <MdViewList className="text-lg" />
-              )}
-            </Button>
-            <Button
-              className="app-nodrag ml-1"
-              title={isPaused ? t('connections.resume') : t('connections.pause')}
-              isIconOnly
-              size="sm"
-              variant="light"
-              onPress={togglePause}
-            >
-              {isPaused ? <IoMdPlay className="text-lg" /> : <IoMdPause className="text-lg" />}
-            </Button>
-            <Button
-              className="app-nodrag ml-1"
-              title={t('connections.closeAll')}
-              isIconOnly
-              size="sm"
-              variant="light"
-              onPress={() => {
-                if (filter === '') {
-                  closeAllConnections()
-                } else {
-                  filteredConnections.forEach((conn) => {
-                    closeConnection(conn.id)
-                  })
-                }
-              }}
-            >
-              {tab === 'active' ? <CgClose className="text-lg" /> : <CgTrash className="text-lg" />}
-            </Button>
-          </Badge>
-        </div>
-      }
-    >
+  const headerControls = (
+    <div className="flex items-center gap-2">
+      <div className="flex items-center text-xs text-default-500 font-mono">
+        <span className="mr-2">↑ {calcTraffic(connectionsInfo?.uploadTotal ?? 0)}</span>
+        <span>↓ {calcTraffic(connectionsInfo?.downloadTotal ?? 0)}</span>
+      </div>
+      <Button
+        className="app-nodrag"
+        title={
+          viewMode === 'list'
+            ? t('connections.table.switchToTable')
+            : t('connections.table.switchToList')
+        }
+        isIconOnly
+        size="sm"
+        variant="flat"
+        onPress={async () => {
+          const newMode = viewMode === 'list' ? 'table' : 'list'
+          setViewMode(newMode)
+          await patchAppConfig({ connectionViewMode: newMode })
+        }}
+      >
+        {viewMode === 'list' ? (
+          <MdTableChart className="text-base" />
+        ) : (
+          <MdViewList className="text-base" />
+        )}
+      </Button>
+      <Button
+        className="app-nodrag"
+        title={isPaused ? t('connections.resume') : t('connections.pause')}
+        isIconOnly
+        size="sm"
+        variant="flat"
+        onPress={togglePause}
+      >
+        {isPaused ? <IoMdPlay className="text-base" /> : <IoMdPause className="text-base" />}
+      </Button>
+      <Button
+        className="app-nodrag text-danger"
+        title={t('connections.closeAll')}
+        isIconOnly
+        size="sm"
+        variant="flat"
+        onPress={() => {
+          if (filter === '') {
+            closeAllConnections()
+          } else {
+            filteredConnections.forEach((conn) => {
+              closeConnection(conn.id)
+            })
+          }
+        }}
+      >
+        {tab === 'active' ? <CgClose className="text-base" /> : <CgTrash className="text-base" />}
+      </Button>
+    </div>
+  )
+
+  const currentList = tab === 'active' ? activeConnections : closedConnections
+  const proxiedCount = useMemo(
+    () => currentList.filter((c) => c.chains[0]?.toUpperCase() !== 'DIRECT').length,
+    [currentList]
+  )
+  const directCount = useMemo(
+    () => currentList.filter((c) => c.chains[0]?.toUpperCase() === 'DIRECT').length,
+    [currentList]
+  )
+
+  const bodyContent = (
+    <div className="flex flex-col h-full w-full">
       {isDetailModalOpen && selectedConnection && (
         <ConnectionDetailModal
           onClose={() => setIsDetailModalOpen(false)}
           connection={selectedConnection}
         />
       )}
-      <div className="overflow-x-auto sticky top-0 z-40">
-        <div className="flex p-2 gap-2">
-          <Tabs
-            size="sm"
-            color={tab === 'active' ? 'primary' : 'danger'}
-            selectedKey={tab}
-            variant="underlined"
-            className="w-fit h-8"
-            onSelectionChange={(key: Key) => {
-              setTab(key as string)
-            }}
-          >
-            <Tab
-              key="active"
-              title={
-                <Badge
-                  color={tab === 'active' ? 'primary' : 'default'}
-                  size="sm"
-                  shape="circle"
-                  variant="flat"
-                  content={activeConnections.length}
-                  showOutline={false}
-                >
-                  <span className="p-1">{t('connections.active')}</span>
-                </Badge>
-              }
-            />
-            <Tab
-              key="closed"
-              title={
-                <Badge
-                  color={tab === 'closed' ? 'danger' : 'default'}
-                  size="sm"
-                  shape="circle"
-                  variant="flat"
-                  content={closedConnections.length}
-                  showOutline={false}
-                >
-                  <span className="p-1">{t('connections.closed')}</span>
-                </Badge>
-              }
-            />
-          </Tabs>
-          <Input
-            variant="flat"
-            size="sm"
-            value={filter}
-            placeholder={t('connections.filter')}
-            isClearable
-            onValueChange={setFilter}
-          />
+      {quickRouteConn && (
+        <QuickRouteModal
+          connection={quickRouteConn}
+          isOpen={true}
+          onClose={() => setQuickRouteConn(null)}
+        />
+      )}
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-divider">
+        <div className="flex p-2 gap-2 items-center justify-between flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Active / Closed Segmented Control */}
+            <div className="inline-flex items-center gap-1 p-0.5 rounded-[6px] border border-divider bg-content1">
+              <button
+                type="button"
+                onClick={() => setTab('active')}
+                className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded-[4px] transition-all ${
+                  tab === 'active'
+                    ? 'bg-background text-foreground shadow-xs font-semibold'
+                    : 'text-default-500 hover:text-foreground'
+                }`}
+              >
+                <span>{t('connections.active')}</span>
+                <span className="font-mono text-[11px] px-1.5 py-0.2 rounded-full bg-primary/10 text-primary">
+                  {activeConnections.length}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab('closed')}
+                className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded-[4px] transition-all ${
+                  tab === 'closed'
+                    ? 'bg-background text-foreground shadow-xs font-semibold'
+                    : 'text-default-500 hover:text-foreground'
+                }`}
+              >
+                <span>{t('connections.closed')}</span>
+                <span className="font-mono text-[11px] px-1.5 py-0.2 rounded-full bg-default-200 text-default-600">
+                  {closedConnections.length}
+                </span>
+              </button>
+            </div>
 
-          {viewMode === 'table' && (
-            <Dropdown>
-              <DropdownTrigger>
+            <Input
+              variant="flat"
+              size="sm"
+              value={filter}
+              placeholder="Search host, IP, app name, or rule..."
+              isClearable
+              className="w-60 text-sm"
+              onValueChange={setFilter}
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            {embedded && headerControls}
+            {viewMode === 'table' && (
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button
+                    size="sm"
+                    variant="flat"
+                    startContent={<HiOutlineAdjustmentsHorizontal className="text-lg" />}
+                  >
+                    {t('connections.table.columns')}
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  aria-label="Column visibility"
+                  closeOnSelect={false}
+                  selectionMode="multiple"
+                  selectedKeys={visibleColumns}
+                  onSelectionChange={async (keys) => {
+                    const newColumns =
+                      keys === 'all'
+                        ? CONNECTION_TABLE_COLUMNS.map((column) => column.key)
+                        : Array.from(keys).map(String)
+                    setVisibleColumns(new Set(newColumns))
+                    await patchAppConfig({ connectionTableColumns: newColumns })
+                  }}
+                >
+                  {CONNECTION_TABLE_COLUMNS.map((column) => (
+                    <DropdownItem key={column.key}>{t(column.labelKey)}</DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
+            )}
+
+            {viewMode === 'list' && (
+              <>
+                <Select
+                  classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
+                  size="sm"
+                  className="w-36 min-w-32 text-xs"
+                  aria-label={t('connections.orderBy')}
+                  selectedKeys={[connectionOrderBy]}
+                  disallowEmptySelection={true}
+                  onSelectionChange={async (v) => {
+                    await patchAppConfig({
+                      connectionOrderBy: v.currentKey as
+                        'time' | 'upload' | 'download' | 'uploadSpeed' | 'downloadSpeed'
+                    })
+                  }}
+                >
+                  <SelectItem key="time">{t('connections.time')}</SelectItem>
+                  <SelectItem key="upload">{t('connections.uploadAmount')}</SelectItem>
+                  <SelectItem key="download">{t('connections.downloadAmount')}</SelectItem>
+                  <SelectItem key="uploadSpeed">{t('connections.uploadSpeed')}</SelectItem>
+                  <SelectItem key="downloadSpeed">{t('connections.downloadSpeed')}</SelectItem>
+                </Select>
                 <Button
                   size="sm"
-                  variant="flat"
-                  startContent={<HiOutlineAdjustmentsHorizontal className="text-2xl" />}
+                  isIconOnly
+                  className="bg-content2"
+                  onPress={() => {
+                    patchAppConfig({
+                      connectionDirection: connectionDirection === 'asc' ? 'desc' : 'asc'
+                    })
+                  }}
                 >
-                  {t('connections.table.columns')}
+                  {connectionDirection === 'asc' ? (
+                    <HiSortAscending className="text-lg" />
+                  ) : (
+                    <HiSortDescending className="text-lg" />
+                  )}
                 </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                aria-label="Column visibility"
-                closeOnSelect={false}
-                selectionMode="multiple"
-                selectedKeys={visibleColumns}
-                onSelectionChange={async (keys) => {
-                  const newColumns =
-                    keys === 'all'
-                      ? CONNECTION_TABLE_COLUMNS.map((column) => column.key)
-                      : Array.from(keys).map(String)
-                  setVisibleColumns(new Set(newColumns))
-                  await patchAppConfig({ connectionTableColumns: newColumns })
-                }}
-              >
-                {CONNECTION_TABLE_COLUMNS.map((column) => (
-                  <DropdownItem key={column.key}>{t(column.labelKey)}</DropdownItem>
-                ))}
-              </DropdownMenu>
-            </Dropdown>
-          )}
+              </>
+            )}
+          </div>
+        </div>
 
-          {viewMode === 'list' && (
-            <>
-              <Select
-                classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
-                size="sm"
-                className="w-45 min-w-32.75"
-                aria-label={t('connections.orderBy')}
-                selectedKeys={[connectionOrderBy]}
-                disallowEmptySelection={true}
-                onSelectionChange={async (v) => {
-                  await patchAppConfig({
-                    connectionOrderBy: v.currentKey as
-                      'time' | 'upload' | 'download' | 'uploadSpeed' | 'downloadSpeed'
-                  })
-                }}
-              >
-                <SelectItem key="time">{t('connections.time')}</SelectItem>
-                <SelectItem key="upload">{t('connections.uploadAmount')}</SelectItem>
-                <SelectItem key="download">{t('connections.downloadAmount')}</SelectItem>
-                <SelectItem key="uploadSpeed">{t('connections.uploadSpeed')}</SelectItem>
-                <SelectItem key="downloadSpeed">{t('connections.downloadSpeed')}</SelectItem>
-              </Select>
-              <Button
-                size="sm"
-                isIconOnly
-                className="bg-content2"
-                onPress={() => {
-                  patchAppConfig({
-                    connectionDirection: connectionDirection === 'asc' ? 'desc' : 'asc'
-                  })
-                }}
-              >
-                {connectionDirection === 'asc' ? (
-                  <HiSortAscending className="text-lg" />
-                ) : (
-                  <HiSortDescending className="text-lg" />
-                )}
-              </Button>
-            </>
+        {/* Smart PM Diagnostic Filter Pills */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 overflow-x-auto no-scrollbar bg-content1/40 text-xs border-t border-divider/50">
+          <span className="text-default-400 font-medium shrink-0">Filter:</span>
+          <button
+            type="button"
+            onClick={() => setCategoryFilter('all')}
+            className={`px-2.5 py-1 rounded-[4px] border transition-colors shrink-0 ${
+              categoryFilter === 'all'
+                ? 'border-primary bg-primary text-primary-foreground font-medium'
+                : 'border-divider bg-background text-default-600 hover:text-foreground'
+            }`}
+          >
+            All ({currentList.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setCategoryFilter('proxied')}
+            className={`px-2.5 py-1 rounded-[4px] border transition-colors shrink-0 ${
+              categoryFilter === 'proxied'
+                ? 'border-primary bg-primary text-primary-foreground font-medium'
+                : 'border-divider bg-background text-default-600 hover:text-foreground'
+            }`}
+          >
+            Proxied ({proxiedCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setCategoryFilter('direct')}
+            className={`px-2.5 py-1 rounded-[4px] border transition-colors shrink-0 ${
+              categoryFilter === 'direct'
+                ? 'border-primary bg-primary text-primary-foreground font-medium'
+                : 'border-divider bg-background text-default-600 hover:text-foreground'
+            }`}
+          >
+            Direct ({directCount})
+          </button>
+
+          {topApps.length > 0 && <span className="text-divider mx-1">|</span>}
+
+          {topApps.map((appName) => (
+            <button
+              key={appName}
+              type="button"
+              onClick={() => setSelectedApp(selectedApp === appName ? null : appName)}
+              className={`px-2 py-0.5 rounded-[4px] border transition-colors shrink-0 ${
+                selectedApp === appName
+                  ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500 font-medium'
+                  : 'border-divider bg-background text-default-500 hover:text-foreground'
+              }`}
+            >
+              {appName}
+            </button>
+          ))}
+
+          {(categoryFilter !== 'all' || selectedApp) && (
+            <button
+              type="button"
+              onClick={() => {
+                setCategoryFilter('all')
+                setSelectedApp(null)
+              }}
+              className="text-xs text-default-400 hover:text-foreground underline ml-1 shrink-0"
+            >
+              Reset
+            </button>
           )}
         </div>
-        <Divider />
       </div>
-      <div className="h-[calc(100vh-100px)] mt-px">
+      <div className={embedded ? 'flex-1 min-h-[460px]' : 'h-[calc(100vh-100px)] mt-px'}>
         {viewMode === 'list' ? (
           <Virtuoso data={filteredConnections} itemContent={renderConnectionItem} />
         ) : (
@@ -519,6 +620,16 @@ const Connections: React.FC = () => {
           />
         )}
       </div>
+    </div>
+  )
+
+  if (embedded) {
+    return bodyContent
+  }
+
+  return (
+    <BasePage title={t('connections.title')} header={headerControls}>
+      {bodyContent}
     </BasePage>
   )
 }

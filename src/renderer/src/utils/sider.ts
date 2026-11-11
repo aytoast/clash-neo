@@ -35,6 +35,37 @@ export function getSiderCardRoute(card?: string): string {
   return SIDER_CARD_ROUTES[card as SiderCardKey]
 }
 
-export function getSiderCardByPath(pathname: string): SiderCardKey | undefined {
+export function getSiderCardByPath(pathname: string, search = ''): SiderCardKey | undefined {
+  const tab = new URLSearchParams(search).get('tab')
+  if (pathname === '/proxies') {
+    if (tab === 'subscriptions') return 'profile'
+    if (tab === 'substore') return 'substore'
+    return 'proxy'
+  }
+  if (pathname === '/routing') {
+    if (tab === 'overrides') return 'override'
+    if (tab === 'resources') return 'resource'
+    return 'rule'
+  }
+  if (pathname === '/telemetry') {
+    if (tab === 'network') return 'network'
+    if (tab === 'traffic') return 'usage'
+    if (tab === 'logs') return 'log'
+    return 'connection'
+  }
+  if (pathname === '/settings') {
+    const tabs: Record<string, SiderCardKey> = {
+      kernel: 'mihomo',
+      tun: 'tun',
+      sysproxy: 'sysproxy',
+      dns: 'dns',
+      sniffer: 'sniff'
+    }
+    return tab ? tabs[tab] : undefined
+  }
   return SIDER_CARD_KEYS.find((key) => SIDER_CARD_ROUTES[key] === pathname)
+}
+
+export function getInitialSiderRoute(remember: boolean, lastCard?: string): string {
+  return remember ? getSiderCardRoute(lastCard) : '/dashboard'
 }

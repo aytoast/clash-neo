@@ -43,8 +43,8 @@ const NodeFieldPicker: React.FC<Props> = ({ type, fields, hidden, onPick, onClos
       backdrop="blur"
       scrollBehavior="inside"
       classNames={{
-        backdrop: 'top-[48px]',
-        wrapper: 'top-[48px] h-[calc(100dvh-48px)]',
+        backdrop: 'top-[32px]',
+        wrapper: 'top-[32px] h-[calc(100dvh-32px)]',
         base: 'max-h-[calc(100dvh-112px)]'
       }}
       onClose={onClose}

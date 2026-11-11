@@ -1,8 +1,8 @@
 import { useTheme } from 'next-themes'
 import { Suspense, lazy, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
-import { NavigateFunction, useLocation, useNavigate, useRoutes } from 'react-router-dom'
-import OutboundModeSwitcher from '@renderer/components/sider/outbound-mode-switcher'
+import { useLocation, useNavigate, useRoutes } from 'react-router-dom'
 import { Button, Divider } from '@heroui/react'
+import OutboundModeSwitcher from '@renderer/components/sider/outbound-mode-switcher'
 import { IoSettings } from 'react-icons/io5'
 import routes, { useDeferredRoutePreload } from '@renderer/routes'
 import UpdaterButton from '@renderer/components/updater/updater-button'
@@ -18,6 +18,8 @@ import 'driver.js/dist/driver.css'
 import { useTranslation } from 'react-i18next'
 import { DEFAULT_ENABLE_TRAFFIC_LOGGER } from '../../shared/appConfig'
 import SiderItem from './components/sider/sider-item'
+import WorkspaceSidebar from './components/sider/workspace-sidebar'
+import CommandPalette from './components/base/command-palette'
 import MihomoIcon from './components/base/mihomo-icon'
 import { getSiderCardByPath } from './utils/sider'
 import { markInitialContentPartReady } from './utils/startup'
@@ -26,9 +28,7 @@ export { getDriver }
 
 const siderHoverOpenDelay = 1000
 const siderHoverCloseDelay = 400
-
-const siderCardsPromise = import('@renderer/components/sider/sider-cards')
-const SiderCards = lazy(() => siderCardsPromise)
+const SiderCards = lazy(() => import('@renderer/components/sider/sider-cards'))
 
 const FirstContentReady: React.FC = () => {
   const { appConfig } = useAppConfig()
@@ -54,13 +54,14 @@ const App: React.FC = () => {
     appTheme = 'system',
     customTheme,
     useWindowFrame = false,
-    siderWidth = 250,
+    siderWidth = 240,
     disableAnimations = false,
     lastSelectedSiderCard = 'proxy',
     rememberSelectedSiderCard = false
   } = appConfig || {}
   useTrafficLogger(enableTrafficLogger)
   useDnsOverrideAutoDisabledNotice()
+
   const narrowWidth = platform === 'darwin' ? 70 : 60
   const [siderWidthValue, setSiderWidthValue] = useState(siderWidth)
   const siderWidthValueRef = useRef(siderWidthValue)
@@ -91,7 +92,7 @@ const App: React.FC = () => {
   }
   useDeferredRoutePreload()
   const { setTheme, systemTheme } = useTheme()
-  const navigate: NavigateFunction = useNavigate()
+  const navigate = useNavigate()
   const location = useLocation()
   const page = useRoutes(routes)
 
@@ -106,7 +107,7 @@ const App: React.FC = () => {
 
   const setTitlebar = useCallback((): void => {
     if (!useWindowFrame && platform !== 'darwin') {
-      const options = { height: 47 } as TitleBarOverlayOptions
+      const options = { height: 32 } as TitleBarOverlayOptions
       try {
         options.color = window.getComputedStyle(document.documentElement).backgroundColor
         options.symbolColor = window.getComputedStyle(document.documentElement).color
@@ -124,7 +125,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!hasAppConfig) return
     if (!rememberSelectedSiderCard) return
-    const currentSiderCard = getSiderCardByPath(location.pathname)
+    const currentSiderCard = getSiderCardByPath(location.pathname, location.search)
     if (!currentSiderCard || currentSiderCard === lastSelectedSiderCard) return
     patchAppConfig({ lastSelectedSiderCard: currentSiderCard })
   }, [
@@ -132,6 +133,7 @@ const App: React.FC = () => {
     rememberSelectedSiderCard,
     lastSelectedSiderCard,
     location.pathname,
+    location.search,
     patchAppConfig
   ])
 
@@ -190,8 +192,10 @@ const App: React.FC = () => {
           setSiderWidthValue(e.clientX)
         }
       }}
-      className={`w-full h-screen flex ${resizing ? 'cursor-ew-resize' : ''}`}
+      className={`w-full h-screen flex bg-background text-foreground ${resizing ? 'cursor-ew-resize' : ''}`}
     >
+      <CommandPalette />
+
       <div
         style={{ width: siderWidthValue }}
         className="relative z-20 h-full shrink-0"
@@ -258,37 +262,41 @@ const App: React.FC = () => {
         ) : (
           <div
             style={{ width: `${siderWidthValue}px` }}
-            className="side h-full overflow-y-auto no-scrollbar"
+            className="side relative z-20 h-full shrink-0 overflow-y-auto no-scrollbar bg-content1"
           >
-            <div className="app-drag sticky top-0 z-40 backdrop-blur bg-transparent h-12.25">
+            <div className="app-drag sticky top-0 z-40 bg-content1 border-b border-divider h-9">
               <div
-                className={`flex justify-between p-2 ${!useWindowFrame && platform === 'darwin' ? 'ml-15' : ''}`}
+                className={`flex items-center justify-between px-2.5 h-9 ${!useWindowFrame && platform === 'darwin' ? 'ml-15' : ''}`}
               >
-                <div className="flex ml-1">
-                  <MihomoIcon className="h-8 leading-8 text-lg mx-px" />
-                  <h3 className="text-lg font-bold leading-8">Clash Party</h3>
-                </div>
-                <UpdaterButton />
-                <Button
-                  size="sm"
-                  className="app-nodrag"
-                  isIconOnly
-                  color={location.pathname.includes('/settings') ? 'primary' : 'default'}
-                  variant={location.pathname.includes('/settings') ? 'solid' : 'light'}
-                  onPress={() => {
-                    navigate('/settings')
-                  }}
+                <button
+                  type="button"
+                  onClick={() => navigate('/dashboard')}
+                  className="app-nodrag flex items-center gap-1.5 ml-0.5 text-left"
                 >
-                  <IoSettings className="text-[20px]" />
-                </Button>
+                  <MihomoIcon className="h-5 leading-5 text-sm" />
+                  <span className="text-sm font-semibold tracking-tight leading-9">
+                    Clash Party
+                  </span>
+                </button>
+                <div className="flex items-center gap-0.5">
+                  <UpdaterButton />
+                  <Button
+                    size="sm"
+                    className="app-nodrag h-6 w-6 min-w-0 p-0"
+                    isIconOnly
+                    color={location.pathname.includes('/settings') ? 'primary' : 'default'}
+                    variant={location.pathname.includes('/settings') ? 'solid' : 'light'}
+                    onPress={() => {
+                      navigate('/settings')
+                    }}
+                  >
+                    <IoSettings className="text-sm" />
+                  </Button>
+                </div>
               </div>
             </div>
-            <div className="mt-2 mx-2">
-              <OutboundModeSwitcher />
-            </div>
-            <Suspense fallback={null}>
-              <SiderCards />
-            </Suspense>
+
+            <WorkspaceSidebar />
           </div>
         )}
       </div>
@@ -301,7 +309,7 @@ const App: React.FC = () => {
           position: 'fixed',
           zIndex: 50,
           left: `${displayedSiderWidth - 2}px`,
-          width: '5px',
+          width: '4px',
           height: '100vh',
           cursor: 'ew-resize'
         }}
@@ -311,9 +319,9 @@ const App: React.FC = () => {
       <Divider orientation="vertical" />
       <div
         style={{ width: `calc(100% - ${siderWidthValue + 1}px)` }}
-        className="main relative z-0 grow h-full overflow-y-auto"
+        className="main relative z-0 grow h-full overflow-y-auto bg-background"
       >
-        <Suspense fallback={<div className="h-full w-full bg-content1" />}>
+        <Suspense fallback={<div className="h-full w-full bg-background" />}>
           {page}
           <FirstContentReady />
         </Suspense>

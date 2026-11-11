@@ -13,7 +13,11 @@ import { MdDeleteForever } from 'react-icons/md'
 import { useTranslation } from 'react-i18next'
 import { DEFAULT_MIHOMO_TUN_CONFIG, getDefaultMihomoTunDevice } from '../../../shared/appConfig'
 
-const Tun: React.FC = () => {
+interface TunProps {
+  embedded?: boolean
+}
+
+const Tun: React.FC<TunProps> = ({ embedded = false }) => {
   const { t } = useTranslation()
   const { controledMihomoConfig, patchControledMihomoConfig } = useControledMihomoConfig()
   const { appConfig, patchAppConfig } = useAppConfig()
@@ -103,213 +107,225 @@ const Tun: React.FC = () => {
     }
   }
 
-  return (
-    <>
-      <BasePage
-        title={t('tun.title')}
-        header={
-          changed && (
+  const saveButton = changed ? (
+    <Button
+      size="sm"
+      className="app-nodrag"
+      color="primary"
+      onPress={() =>
+        onSave({
+          tun: {
+            device: values.device,
+            stack: values.stack,
+            'auto-route': values.autoRoute,
+            'auto-redirect': values.autoRedirect,
+            'auto-detect-interface': values.autoDetectInterface,
+            'dns-hijack': values.dnsHijack,
+            'strict-route': values.strictRoute,
+            'route-exclude-address': values.routeExcludeAddress,
+            mtu: values.mtu
+          }
+        })
+      }
+    >
+      {t('common.save')}
+    </Button>
+  ) : null
+
+  const content = (
+    <div className="flex flex-col gap-3 pb-6">
+      {embedded && saveButton && (
+        <div className="flex justify-end sticky top-0 z-10 bg-background/80 backdrop-blur py-2">
+          {saveButton}
+        </div>
+      )}
+      <SettingCard className="tun-settings">
+        {platform === 'win32' && (
+          <SettingItem title={t('tun.firewall.title')} divider>
             <Button
               size="sm"
-              className="app-nodrag"
               color="primary"
-              onPress={() =>
-                onSave({
-                  tun: {
-                    device: values.device,
-                    stack: values.stack,
-                    'auto-route': values.autoRoute,
-                    'auto-redirect': values.autoRedirect,
-                    'auto-detect-interface': values.autoDetectInterface,
-                    'dns-hijack': values.dnsHijack,
-                    'strict-route': values.strictRoute,
-                    'route-exclude-address': values.routeExcludeAddress,
-                    mtu: values.mtu
-                  }
-                })
-              }
+              isLoading={loading}
+              onPress={async () => {
+                setLoading(true)
+                try {
+                  await setupFirewall()
+                  new Notification(t('tun.notifications.firewallResetSuccess'))
+                  await restartCore()
+                } catch (e) {
+                  showErrorSync(e, t('common.error.firewallSetupFailed'))
+                } finally {
+                  setLoading(false)
+                }
+              }}
             >
-              {t('common.save')}
+              {t('tun.firewall.reset')}
             </Button>
-          )
-        }
-      >
-        <SettingCard className="tun-settings">
-          {platform === 'win32' && (
-            <SettingItem title={t('tun.firewall.title')} divider>
-              <Button
-                size="sm"
-                color="primary"
-                isLoading={loading}
-                onPress={async () => {
-                  setLoading(true)
-                  try {
-                    await setupFirewall()
-                    new Notification(t('tun.notifications.firewallResetSuccess'))
-                    await restartCore()
-                  } catch (e) {
-                    showErrorSync(e, t('common.error.firewallSetupFailed'))
-                  } finally {
-                    setLoading(false)
-                  }
-                }}
-              >
-                {t('tun.firewall.reset')}
-              </Button>
-            </SettingItem>
-          )}
-          {platform !== 'win32' && (
-            <SettingItem title={t('tun.core.title')} divider>
-              <Button
-                size="sm"
-                color="primary"
-                onPress={async () => {
-                  try {
-                    await grantTunPermissions()
-                    new Notification(t('tun.notifications.coreAuthSuccess'))
-                    await restartCore()
-                  } catch (e) {
-                    showErrorSync(e, t('common.error.coreAuthFailed'))
-                  }
-                }}
-              >
-                {t('tun.core.auth')}
-              </Button>
-            </SettingItem>
-          )}
-          {platform === 'darwin' && (
-            <SettingItem title={t('tun.dns.autoSet')} divider>
-              <Switch
-                size="sm"
-                isSelected={autoSetDNS}
-                onValueChange={async (v) => {
-                  await patchAppConfig({ autoSetDNS: v })
-                }}
-              />
-            </SettingItem>
-          )}
-
-          <SettingItem title={t('tun.stack.title')} divider>
-            <Tabs
+          </SettingItem>
+        )}
+        {platform !== 'win32' && (
+          <SettingItem title={t('tun.core.title')} divider>
+            <Button
               size="sm"
               color="primary"
-              selectedKey={values.stack}
-              onSelectionChange={(key: Key) => setValues({ ...values, stack: key as TunStack })}
+              onPress={async () => {
+                try {
+                  await grantTunPermissions()
+                  new Notification(t('tun.notifications.coreAuthSuccess'))
+                  await restartCore()
+                } catch (e) {
+                  showErrorSync(e, t('common.error.coreAuthFailed'))
+                }
+              }}
             >
-              <Tab key="gvisor" title="gVisor" />
-              <Tab key="mixed" title="Mixed" />
-              <Tab key="system" title="System" />
-              <Tab key="mips" title="Mips" />
-            </Tabs>
+              {t('tun.core.auth')}
+            </Button>
           </SettingItem>
-          <SettingItem title={t('tun.device.title')} divider>
-            <Input
+        )}
+        {platform === 'darwin' && (
+          <SettingItem title={t('tun.dns.autoSet')} divider>
+            <Switch
               size="sm"
-              className="w-25"
-              value={values.device}
-              placeholder={getDefaultMihomoTunDevice(platform)}
-              onValueChange={(v) => {
-                setValues({ ...values, device: v })
+              isSelected={autoSetDNS}
+              onValueChange={async (v) => {
+                await patchAppConfig({ autoSetDNS: v })
               }}
             />
           </SettingItem>
+        )}
 
-          <SettingItem title={t('tun.strictRoute')} divider>
+        <SettingItem title={t('tun.stack.title')} divider>
+          <Tabs
+            size="sm"
+            color="primary"
+            selectedKey={values.stack}
+            onSelectionChange={(key: Key) => setValues({ ...values, stack: key as TunStack })}
+          >
+            <Tab key="gvisor" title="gVisor" />
+            <Tab key="mixed" title="Mixed" />
+            <Tab key="system" title="System" />
+            <Tab key="mips" title="Mips" />
+          </Tabs>
+        </SettingItem>
+        <SettingItem title={t('tun.device.title')} divider>
+          <Input
+            size="sm"
+            className="w-25"
+            value={values.device}
+            placeholder={getDefaultMihomoTunDevice(platform)}
+            onValueChange={(v) => {
+              setValues({ ...values, device: v })
+            }}
+          />
+        </SettingItem>
+
+        <SettingItem title={t('tun.strictRoute')} divider>
+          <Switch
+            size="sm"
+            isSelected={values.strictRoute}
+            onValueChange={(v) => {
+              setValues({ ...values, strictRoute: v })
+            }}
+          />
+        </SettingItem>
+        <SettingItem title={t('tun.autoRoute')} divider>
+          <Switch
+            size="sm"
+            isSelected={values.autoRoute}
+            onValueChange={(v) => {
+              setValues({ ...values, autoRoute: v })
+            }}
+          />
+        </SettingItem>
+        {platform === 'linux' && (
+          <SettingItem title={t('tun.autoRedirect')} divider>
             <Switch
               size="sm"
-              isSelected={values.strictRoute}
+              isSelected={values.autoRedirect}
               onValueChange={(v) => {
-                setValues({ ...values, strictRoute: v })
+                setValues({ ...values, autoRedirect: v })
               }}
             />
           </SettingItem>
-          <SettingItem title={t('tun.autoRoute')} divider>
-            <Switch
-              size="sm"
-              isSelected={values.autoRoute}
-              onValueChange={(v) => {
-                setValues({ ...values, autoRoute: v })
-              }}
-            />
-          </SettingItem>
-          {platform === 'linux' && (
-            <SettingItem title={t('tun.autoRedirect')} divider>
-              <Switch
+        )}
+        <SettingItem title={t('tun.autoDetectInterface')} divider>
+          <Switch
+            size="sm"
+            isSelected={values.autoDetectInterface}
+            onValueChange={(v) => {
+              setValues({ ...values, autoDetectInterface: v })
+            }}
+          />
+        </SettingItem>
+        <SettingItem title="MTU" divider>
+          <Input
+            size="sm"
+            type="number"
+            className="w-25"
+            value={values.mtu.toString()}
+            min={1}
+            onValueChange={(v) => {
+              setValues({
+                ...values,
+                mtu: Math.min(Math.max(parseInt(v) || 1500, 1), 65535)
+              })
+            }}
+          />
+        </SettingItem>
+        <SettingItem title={t('tun.dnsHijack')} divider>
+          <Input
+            size="sm"
+            className="w-[50%]"
+            value={values.dnsHijack.join(',')}
+            onValueChange={(v) => {
+              const arr = v !== '' ? v.split(',') : []
+              setValues({ ...values, dnsHijack: arr })
+            }}
+          />
+        </SettingItem>
+        <div className="flex flex-col items-stretch">
+          <h3 className="mb-2">{t('tun.excludeAddress.title')}</h3>
+          {excludeAddressInputs.map((address, index) => (
+            <div key={index} className="mb-2 flex">
+              <Input
+                fullWidth
                 size="sm"
-                isSelected={values.autoRedirect}
-                onValueChange={(v) => {
-                  setValues({ ...values, autoRedirect: v })
-                }}
+                placeholder={t('tun.excludeAddress.placeholder')}
+                value={address}
+                isInvalid={Boolean(getExcludeAddressError(address))}
+                errorMessage={getExcludeAddressError(address)}
+                onValueChange={(v) => handleExcludeAddressChange(v, index)}
               />
-            </SettingItem>
-          )}
-          <SettingItem title={t('tun.autoDetectInterface')} divider>
-            <Switch
-              size="sm"
-              isSelected={values.autoDetectInterface}
-              onValueChange={(v) => {
-                setValues({ ...values, autoDetectInterface: v })
-              }}
-            />
-          </SettingItem>
-          <SettingItem title="MTU" divider>
-            <Input
-              size="sm"
-              type="number"
-              className="w-25"
-              value={values.mtu.toString()}
-              min={1}
-              onValueChange={(v) => {
-                setValues({
-                  ...values,
-                  mtu: Math.min(Math.max(parseInt(v) || 1500, 1), 65535)
-                })
-              }}
-            />
-          </SettingItem>
-          <SettingItem title={t('tun.dnsHijack')} divider>
-            <Input
-              size="sm"
-              className="w-[50%]"
-              value={values.dnsHijack.join(',')}
-              onValueChange={(v) => {
-                const arr = v !== '' ? v.split(',') : []
-                setValues({ ...values, dnsHijack: arr })
-              }}
-            />
-          </SettingItem>
-          <div className="flex flex-col items-stretch">
-            <h3 className="mb-2">{t('tun.excludeAddress.title')}</h3>
-            {excludeAddressInputs.map((address, index) => (
-              <div key={index} className="mb-2 flex">
-                <Input
-                  fullWidth
+              {index < values.routeExcludeAddress.length && (
+                <Button
+                  className="ml-2"
                   size="sm"
-                  placeholder={t('tun.excludeAddress.placeholder')}
-                  value={address}
-                  isInvalid={Boolean(getExcludeAddressError(address))}
-                  errorMessage={getExcludeAddressError(address)}
-                  onValueChange={(v) => handleExcludeAddressChange(v, index)}
-                />
-                {index < values.routeExcludeAddress.length && (
-                  <Button
-                    className="ml-2"
-                    size="sm"
-                    variant="flat"
-                    color="warning"
-                    onPress={() => handleExcludeAddressChange('', index)}
-                  >
-                    <MdDeleteForever className="text-lg" />
-                  </Button>
-                )}
-              </div>
-            ))}
-            {hasInvalidExcludeAddress && (
-              <div className="px-1 text-xs text-danger">{t('tun.excludeAddress.notSaved')}</div>
-            )}
-          </div>
-        </SettingCard>
-      </BasePage>
+                  variant="flat"
+                  color="warning"
+                  onPress={() => handleExcludeAddressChange('', index)}
+                >
+                  <MdDeleteForever className="text-lg" />
+                </Button>
+              )}
+            </div>
+          ))}
+          {hasInvalidExcludeAddress && (
+            <div className="px-1 text-xs text-danger">{t('tun.excludeAddress.notSaved')}</div>
+          )}
+        </div>
+      </SettingCard>
+    </div>
+  )
+
+  return (
+    <>
+      {embedded ? (
+        <div className="h-full w-full overflow-y-auto px-4 py-2">{content}</div>
+      ) : (
+        <BasePage title={t('tun.title')} header={saveButton}>
+          {content}
+        </BasePage>
+      )}
     </>
   )
 }

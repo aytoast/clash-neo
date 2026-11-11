@@ -1,63 +1,127 @@
+import React from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
-import { getSiderCardRoute } from '@renderer/utils/sider'
+import { getInitialSiderRoute } from '@renderer/utils/sider'
 import {
-  Connections,
-  DNS,
-  Logs,
-  Mihomo,
+  Dashboard,
+  ProxiesHub,
+  RoutingHub,
+  SettingsHub,
+  Telemetry,
   NetworkPageComponent,
   Override,
-  Profiles,
   Proxies,
-  Resources,
   Rules,
   Settings,
+  Profiles,
+  Logs,
+  Connections,
+  Mihomo,
+  Sysproxy,
+  Tun,
+  Resources,
+  DNS,
   Sniffer,
   SubStore,
-  Sysproxy,
-  Traffic,
-  Tun
+  Traffic
 } from './route-pages'
 
 export { useDeferredRoutePreload } from './route-pages'
 
 const HomeRedirect: React.FC = () => {
   const { appConfig } = useAppConfig()
-
   if (!appConfig) return null
-  const dest = appConfig.rememberSelectedSiderCard ? appConfig.lastSelectedSiderCard : 'proxy'
-  return <Navigate to={getSiderCardRoute(dest)} replace />
+  return (
+    <Navigate
+      to={getInitialSiderRoute(
+        appConfig.rememberSelectedSiderCard ?? false,
+        appConfig.lastSelectedSiderCard
+      )}
+      replace
+    />
+  )
 }
 
 const routes = [
   {
-    path: '/network',
-    element: <NetworkPageComponent />
-  },
-  {
-    path: '/mihomo',
-    element: <Mihomo />
-  },
-  {
-    path: '/sysproxy',
-    element: <Sysproxy />
-  },
-  {
-    path: '/tun',
-    element: <Tun />
+    path: '/dashboard',
+    element: <Dashboard />
   },
   {
     path: '/proxies',
+    element: <ProxiesHub />
+  },
+  {
+    path: '/proxies/nodes',
     element: <Proxies />
+  },
+  {
+    path: '/nodes',
+    element: <Proxies />
+  },
+  {
+    path: '/profiles',
+    element: <Profiles />
+  },
+  {
+    path: '/substore',
+    element: <SubStore />
+  },
+  {
+    path: '/routing',
+    element: <RoutingHub />
   },
   {
     path: '/rules',
     element: <Rules />
   },
   {
+    path: '/override',
+    element: <Override />
+  },
+  {
     path: '/resources',
     element: <Resources />
+  },
+  {
+    path: '/telemetry',
+    element: <Telemetry />
+  },
+  {
+    path: '/connections',
+    element: <Connections />
+  },
+  {
+    path: '/traffic',
+    element: <Traffic />
+  },
+  {
+    path: '/network',
+    element: <NetworkPageComponent />
+  },
+  {
+    path: '/logs',
+    element: <Logs />
+  },
+  {
+    path: '/settings',
+    element: <SettingsHub />
+  },
+  {
+    path: '/settings/general',
+    element: <Settings />
+  },
+  {
+    path: '/mihomo',
+    element: <Mihomo />
+  },
+  {
+    path: '/tun',
+    element: <Tun />
+  },
+  {
+    path: '/sysproxy',
+    element: <Sysproxy />
   },
   {
     path: '/dns',
@@ -66,34 +130,6 @@ const routes = [
   {
     path: '/sniffer',
     element: <Sniffer />
-  },
-  {
-    path: '/logs',
-    element: <Logs />
-  },
-  {
-    path: '/connections',
-    element: <Connections />
-  },
-  {
-    path: '/override',
-    element: <Override />
-  },
-  {
-    path: '/profiles',
-    element: <Profiles />
-  },
-  {
-    path: '/settings',
-    element: <Settings />
-  },
-  {
-    path: '/substore',
-    element: <SubStore />
-  },
-  {
-    path: '/traffic',
-    element: <Traffic />
   },
   {
     path: '/',

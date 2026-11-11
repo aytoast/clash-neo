@@ -18,7 +18,11 @@ function FindProxyForURL(url, host) {
 }
 `
 
-const Sysproxy: React.FC = () => {
+interface SysproxyProps {
+  embedded?: boolean
+}
+
+const Sysproxy: React.FC<SysproxyProps> = ({ embedded = false }) => {
   const defaultBypass: string[] =
     platform === 'linux'
       ? ['localhost', '127.0.0.1', '192.168.0.0/16', '10.0.0.0/8', '172.16.0.0/12', '::1']
@@ -133,17 +137,19 @@ const Sysproxy: React.FC = () => {
     }
   }
 
-  return (
-    <BasePage
-      title={t('sysproxy.title')}
-      header={
-        changed && (
-          <Button color="primary" className="app-nodrag" size="sm" onPress={onSave}>
-            {t('common.save')}
-          </Button>
-        )
-      }
-    >
+  const saveButton = changed ? (
+    <Button color="primary" className="app-nodrag" size="sm" onPress={onSave}>
+      {t('common.save')}
+    </Button>
+  ) : null
+
+  const content = (
+    <div className="flex flex-col gap-3 pb-6">
+      {embedded && saveButton && (
+        <div className="flex justify-end sticky top-0 z-10 bg-background/80 backdrop-blur py-2">
+          {saveButton}
+        </div>
+      )}
       {openPacEditor && (
         <PacEditorModal
           script={values.pacScript || defaultPacScript}
@@ -242,6 +248,14 @@ const Sysproxy: React.FC = () => {
           </>
         )}
       </SettingCard>
+    </div>
+  )
+
+  return embedded ? (
+    <div className="h-full w-full overflow-y-auto px-4 py-2">{content}</div>
+  ) : (
+    <BasePage title={t('sysproxy.title')} header={saveButton}>
+      {content}
     </BasePage>
   )
 }

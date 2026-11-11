@@ -164,6 +164,10 @@ const validInvokeChannels = [
   'showMainWindow',
   'closeMainWindow',
   'triggerMainWindow',
+  'windowMinimize',
+  'windowMaximize',
+  'windowClose',
+  'windowIsMaximized',
   'showFloatingWindow',
   'closeFloatingWindow',
   'showContextMenu',
@@ -210,7 +214,8 @@ const validListenChannels = [
   'updateDownloadProgress',
   'pluginConfigUpdated',
   'openPluginFile',
-  'dnsOverrideAutoDisabled'
+  'dnsOverrideAutoDisabled',
+  'windowMaximizedState'
 ] as const
 
 // 允许的 send channels 白名单

@@ -42,7 +42,7 @@ export default function SiderItem({
         >
           {icon}
         </span>
-        <span className="sider-item-label truncate text-sm" aria-hidden={!expanded}>
+        <span className="sider-item-label truncate text-base" aria-hidden={!expanded}>
           {title}
         </span>
       </Button>

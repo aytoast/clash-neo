@@ -196,15 +196,11 @@ async function createWindowInternal(): Promise<void> {
     height: savedState.height,
     x: savedState.x,
     y: savedState.y,
-    show: false,
+    show: is.dev ? true : false,
     frame: useWindowFrame,
     fullscreenable: false,
     titleBarStyle: useWindowFrame ? 'default' : 'hidden',
-    titleBarOverlay: useWindowFrame
-      ? false
-      : {
-          height: 47
-        },
+    titleBarOverlay: false,
     autoHideMenuBar: true,
     // Win 显式指定 icon，避免异常/恢复路径下任务栏与窗口图标依赖默认 exe
     ...(process.platform === 'linux' || process.platform === 'win32' ? { icon: icon } : {}),
@@ -293,6 +289,14 @@ function setupWindowEvents(window: BrowserWindow): void {
         })
         .catch((error) => mainWindowLogger.error('Failed to recover main window', error))
     }
+  })
+
+  window.on('maximize', () => {
+    window.webContents.send('windowMaximizedState', true)
+  })
+
+  window.on('unmaximize', () => {
+    window.webContents.send('windowMaximizedState', false)
   })
 
   window.webContents.on('unresponsive', () => {

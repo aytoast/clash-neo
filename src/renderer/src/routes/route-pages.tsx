@@ -2,6 +2,11 @@ import { useEffect } from 'react'
 import { onInitialContentReady } from '@renderer/utils/startup'
 import { createPreloadablePage } from './preloadable-page'
 
+const DashboardPage = createPreloadablePage(() => import('@renderer/pages/dashboard'))
+const TelemetryPage = createPreloadablePage(() => import('@renderer/pages/telemetry'))
+const ProxiesHubPage = createPreloadablePage(() => import('@renderer/pages/proxies-hub'))
+const RoutingHubPage = createPreloadablePage(() => import('@renderer/pages/routing-hub'))
+const SettingsHubPage = createPreloadablePage(() => import('@renderer/pages/settings-hub'))
 const NetworkPage = createPreloadablePage(() => import('@renderer/pages/network'))
 const OverridePage = createPreloadablePage(() => import('@renderer/pages/override'))
 const ProxiesPage = createPreloadablePage(() => import('@renderer/pages/proxies'))
@@ -19,6 +24,11 @@ const SnifferPage = createPreloadablePage(() => import('@renderer/pages/sniffer'
 const SubStorePage = createPreloadablePage(() => import('@renderer/pages/substore'))
 const TrafficPage = createPreloadablePage(() => import('@renderer/pages/traffic'))
 
+export const Dashboard = DashboardPage.Page
+export const Telemetry = TelemetryPage.Page
+export const ProxiesHub = ProxiesHubPage.Page
+export const RoutingHub = RoutingHubPage.Page
+export const SettingsHub = SettingsHubPage.Page
 export const NetworkPageComponent = NetworkPage.Page
 export const Override = OverridePage.Page
 export const Proxies = ProxiesPage.Page
@@ -36,7 +46,8 @@ export const Sniffer = SnifferPage.Page
 export const SubStore = SubStorePage.Page
 export const Traffic = TrafficPage.Page
 
-// 默认落地页立即预加载，避免首屏等待 chunk 下载。
+// Preload default landing pages immediately
+void DashboardPage.preload().catch(() => {})
 void ProxiesPage.preload().catch(() => {})
 
 const remainingPageLoaders: Array<() => Promise<unknown>> = [

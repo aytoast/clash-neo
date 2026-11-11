@@ -12,7 +12,11 @@ import { MdDeleteForever } from 'react-icons/md'
 import { useTranslation } from 'react-i18next'
 import { DEFAULT_CONTROL_SNIFF, DEFAULT_MIHOMO_SNIFFER_CONFIG } from '../../../shared/appConfig'
 
-const Sniffer: React.FC = () => {
+interface SnifferProps {
+  embedded?: boolean
+}
+
+const Sniffer: React.FC<SnifferProps> = ({ embedded = false }) => {
   const { t } = useTranslation()
   const { controledMihomoConfig, patchControledMihomoConfig } = useControledMihomoConfig()
   const { appConfig } = useAppConfig()
@@ -116,36 +120,38 @@ const Sniffer: React.FC = () => {
     ))
   }
 
-  return (
-    <BasePage
-      title={t('sniffer.title')}
-      header={
-        changed && (
-          <Button
-            size="sm"
-            className="app-nodrag"
-            color="primary"
-            onPress={() =>
-              onSave({
-                sniffer: {
-                  enable: values.enable,
-                  'parse-pure-ip': values.parsePureIP,
-                  'force-dns-mapping': values.forceDNSMapping,
-                  'override-destination': values.overrideDestination,
-                  sniff: values.sniff,
-                  'skip-domain': values.skipDomain,
-                  'force-domain': values.forceDomain,
-                  'skip-dst-address': values.skipDstAddress,
-                  'skip-src-address': values.skipSrcAddress
-                }
-              })
-            }
-          >
-            {isLocalActive || controlSniff ? t('common.save') : t('sniffer.saveOnly')}
-          </Button>
-        )
+  const saveButton = changed ? (
+    <Button
+      size="sm"
+      className="app-nodrag"
+      color="primary"
+      onPress={() =>
+        onSave({
+          sniffer: {
+            enable: values.enable,
+            'parse-pure-ip': values.parsePureIP,
+            'force-dns-mapping': values.forceDNSMapping,
+            'override-destination': values.overrideDestination,
+            sniff: values.sniff,
+            'skip-domain': values.skipDomain,
+            'force-domain': values.forceDomain,
+            'skip-dst-address': values.skipDstAddress,
+            'skip-src-address': values.skipSrcAddress
+          }
+        })
       }
     >
+      {isLocalActive || controlSniff ? t('common.save') : t('sniffer.saveOnly')}
+    </Button>
+  ) : null
+
+  const content = (
+    <div className="flex flex-col gap-3 pb-6">
+      {embedded && saveButton && (
+        <div className="flex justify-end sticky top-0 z-10 bg-background/80 backdrop-blur py-2">
+          {saveButton}
+        </div>
+      )}
       <SettingCard>
         {!isLocalActive && (
           <SettingItem title={t('sniffer.enable')} divider>
@@ -243,6 +249,14 @@ const Sniffer: React.FC = () => {
           {renderListInputs('skipSrcAddress', t('sniffer.skipSrcAddress.placeholder'))}
         </div>
       </SettingCard>
+    </div>
+  )
+
+  return embedded ? (
+    <div className="h-full w-full overflow-y-auto px-4 py-2">{content}</div>
+  ) : (
+    <BasePage title={t('sniffer.title')} header={saveButton}>
+      {content}
     </BasePage>
   )
 }

@@ -27,6 +27,8 @@ import { showError } from '@renderer/utils/error-display'
 import { toast } from '@renderer/components/base/toast'
 import { useProfileConfig } from '@renderer/hooks/use-profile-config'
 import { useTranslation } from 'react-i18next'
+import { parse, stringify } from 'yaml'
+import { cleanProxiesList } from '@renderer/utils/clean-nodes'
 import BaseConfirmModal from '../base/base-confirm-modal'
 import LocalNodes from '../local/local-nodes'
 import { isLocalProfile } from '../../../../shared/local-config'
@@ -91,6 +93,13 @@ const ProfileItem: React.FC<Props> = (props) => {
 
   const menuItems: MenuItem[] = useMemo(() => {
     const list = [
+      {
+        key: 'clean-nodes',
+        label: 'Auto-clean node names',
+        showDivider: false,
+        color: 'default',
+        className: ''
+      } as MenuItem,
       {
         key: 'edit-info',
         label: t('profiles.editInfo.title'),
@@ -170,6 +179,23 @@ const ProfileItem: React.FC<Props> = (props) => {
 
   const onMenuAction = async (key: Key): Promise<void> => {
     switch (key) {
+      case 'clean-nodes': {
+        try {
+          const str = await getProfileStr(info.id)
+          const parsed = parse(str)
+          if (parsed && Array.isArray(parsed.proxies) && parsed.proxies.length > 0) {
+            parsed.proxies = cleanProxiesList(parsed.proxies)
+            await setProfileStr(info.id, stringify(parsed))
+            toast.success(`Cleaned ${parsed.proxies.length} node names`)
+            mutateProfileConfig()
+          } else {
+            toast.warning('No proxies found to clean in this profile')
+          }
+        } catch (e) {
+          toast.error(String(e))
+        }
+        break
+      }
       case 'edit-info': {
         setOpenInfoEditor(true)
         break

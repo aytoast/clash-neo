@@ -23,7 +23,7 @@ const ConfigViewer: React.FC<Props> = (props) => {
   return (
     <Modal
       backdrop="blur"
-      classNames={{ backdrop: 'top-[48px]' }}
+      classNames={{ backdrop: 'top-[32px]' }}
       size="5xl"
       hideCloseButton
       isOpen={true}

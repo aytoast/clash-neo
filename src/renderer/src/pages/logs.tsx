@@ -56,7 +56,11 @@ if (import.meta.hot) {
   })
 }
 
-const Logs: React.FC = () => {
+interface LogsProps {
+  embedded?: boolean
+}
+
+const Logs: React.FC<LogsProps> = ({ embedded = false }: LogsProps) => {
   const { t } = useTranslation()
   const [logs, setLogs] = useState<IMihomoLogInfo[]>(cachedLogs.log)
   const [filter, setFilter] = useState(() => {
@@ -109,20 +113,21 @@ const Logs: React.FC = () => {
     }
   }, [])
 
-  return (
-    <BasePage title={t('logs.title')}>
-      <div className="sticky top-0 z-40">
-        <div className="w-full flex p-2">
+  const bodyContent = (
+    <div className="flex flex-col h-full w-full">
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur">
+        <div className="w-full flex p-2 items-center gap-2">
           <Input
             size="sm"
             value={filter}
             placeholder={t('logs.filter')}
             isClearable
+            className="flex-1"
             onValueChange={setFilter}
           />
           <Select
             size="sm"
-            className="ml-2 w-28 shrink-0"
+            className="w-28 shrink-0"
             aria-label={t('mihomo.selectLogLevel')}
             selectedKeys={[levelFilter]}
             disallowEmptySelection
@@ -140,7 +145,6 @@ const Logs: React.FC = () => {
           <Button
             size="sm"
             isIconOnly
-            className="ml-2"
             color={trace ? 'primary' : 'default'}
             variant={trace ? 'solid' : 'bordered'}
             title={t('logs.autoScroll')}
@@ -154,7 +158,6 @@ const Logs: React.FC = () => {
             size="sm"
             isIconOnly
             title={t('logs.clear')}
-            className="ml-2"
             variant="light"
             color="danger"
             onPress={() => {
@@ -166,7 +169,7 @@ const Logs: React.FC = () => {
         </div>
         <Divider />
       </div>
-      <div className="h-[calc(100vh-100px)] mt-px">
+      <div className={embedded ? 'flex-1 min-h-[460px]' : 'h-[calc(100vh-100px)] mt-px'}>
         <Virtuoso
           ref={virtuosoRef}
           data={filteredLogs}
@@ -177,8 +180,14 @@ const Logs: React.FC = () => {
           )}
         />
       </div>
-    </BasePage>
+    </div>
   )
+
+  if (embedded) {
+    return bodyContent
+  }
+
+  return <BasePage title={t('logs.title')}>{bodyContent}</BasePage>
 }
 
 export default Logs

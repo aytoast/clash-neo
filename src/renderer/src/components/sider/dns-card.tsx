@@ -97,13 +97,13 @@ const DNSCard: React.FC<Props> = (props) => {
       <>
         <SiderItem
           className={dnsCardStatus}
-          title={isLocalActive ? 'DNS' : t('sider.cards.dns')}
+          title={isLocalActive ? 'Dns' : t('sider.cards.dns')}
           route="/dns"
           icon={<LuServer className="text-[20px]" />}
           expanded={expanded}
         >
           <BorderSwitch
-            aria-label={isLocalActive ? 'DNS' : t('sider.cards.dns')}
+            aria-label={isLocalActive ? 'Dns' : t('sider.cards.dns')}
             isShowBorder={match && (isLocalActive ? localDnsEnabled : controlDns)}
             isSelected={isLocalActive ? localDnsEnabled : controlDns}
             onValueChange={onChange}
@@ -154,7 +154,7 @@ const DNSCard: React.FC<Props> = (props) => {
           <h3
             className={`text-md font-bold sider-card-title ${match ? 'text-primary-foreground' : 'text-foreground'}`}
           >
-            {isLocalActive ? 'DNS' : t('sider.cards.dns')}
+            {isLocalActive ? 'Dns' : t('sider.cards.dns')}
           </h3>
         </CardFooter>
       </Card>

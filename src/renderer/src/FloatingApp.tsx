@@ -16,7 +16,6 @@ const FloatingApp: React.FC = () => {
   const [upload, setUpload] = useState(0)
   const [download, setDownload] = useState(0)
 
-  // 根据总速率计算旋转速度
   const spinSpeed = useMemo(() => {
     const total = upload + download
     if (total === 0) return 0
@@ -61,7 +60,7 @@ const FloatingApp: React.FC = () => {
 
   return (
     <div className="app-drag h-screen w-screen overflow-hidden">
-      <div className="floating-bg border border-divider flex bg-content1 h-full w-full">
+      <div className="floating-bg border border-divider flex items-center bg-content1 h-full w-full px-1 rounded-[8px]">
         <div className="flex shrink-0 justify-center items-center h-full aspect-square">
           <div
             onContextMenu={(e) => {
@@ -79,18 +78,24 @@ const FloatingApp: React.FC = () => {
                   }
                 : {}
             }
-            className={`app-nodrag cursor-pointer floating-thumb ${tunEnabled ? 'bg-secondary' : sysProxyEnabled ? 'bg-primary' : 'bg-default'} hover:opacity-hover h-[calc(100%-4px)] aspect-square`}
+            className={`app-nodrag cursor-pointer floating-thumb rounded-[6px] flex items-center justify-center ${
+              tunEnabled
+                ? 'bg-emerald-500 text-zinc-950'
+                : sysProxyEnabled
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-content3 text-default-500'
+            } hover:opacity-90 h-[calc(100%-6px)] aspect-square`}
           >
-            <MihomoIcon className="floating-icon text-primary-foreground h-full leading-full text-[22px] mx-auto" />
+            <MihomoIcon className="floating-icon text-[18px] mx-auto" />
           </div>
         </div>
-        <div className="flex-1 min-w-0 overflow-hidden">
-          <div className="flex flex-col justify-center h-full w-full">
-            <h2 className="text-end floating-text whitespace-nowrap text-[12px] mr-2 font-bold">
-              {calcTraffic(upload)}/s
+        <div className="flex-1 min-w-0 overflow-hidden pr-2">
+          <div className="flex flex-col justify-center h-full w-full font-mono">
+            <h2 className="text-end floating-text whitespace-nowrap text-[11px] leading-[13px] font-medium text-default-500">
+              ↑ {calcTraffic(upload)}/s
             </h2>
-            <h2 className="text-end floating-text whitespace-nowrap text-[12px] mr-2 font-bold">
-              {calcTraffic(download)}/s
+            <h2 className="text-end floating-text whitespace-nowrap text-[11px] leading-[13px] font-semibold text-foreground">
+              ↓ {calcTraffic(download)}/s
             </h2>
           </div>
         </div>

@@ -7,13 +7,14 @@ import DeleteResourceButton from '../local/delete-resource-button'
 
 interface RuleItemProps extends IMihomoRulesDetail {
   index: number
+  priority?: 'custom' | 'provider' | 'match'
   onEdit?: () => void
   onDelete?: () => Promise<void>
 }
 
 const RuleItem: React.FC<RuleItemProps> = (props) => {
   const { t } = useTranslation()
-  const { type, payload, proxy, index: listIndex, extra, onEdit, onDelete } = props
+  const { type, payload, proxy, index: listIndex, extra, onEdit, onDelete, priority } = props
   const ruleIndex = props.index ?? listIndex
 
   const [isEnabled, setIsEnabled] = useState(!extra?.disabled)
@@ -43,6 +44,21 @@ const RuleItem: React.FC<RuleItemProps> = (props) => {
     return t('rules.hitAt.days', { count: Math.floor(diff / 86400) })
   }
 
+  const priorityBadge =
+    priority === 'custom' || !!onEdit ? (
+      <span className="text-[11px] px-1.5 py-0.5 rounded-[4px] bg-amber-500/15 text-amber-500 dark:text-amber-400 font-semibold tracking-tight">
+        P1 Custom
+      </span>
+    ) : type === 'MATCH' || priority === 'match' ? (
+      <span className="text-[11px] px-1.5 py-0.5 rounded-[4px] bg-default-200/60 text-default-500 font-medium tracking-tight">
+        Fallback
+      </span>
+    ) : (
+      <span className="text-[11px] px-1.5 py-0.5 rounded-[4px] bg-primary/10 text-primary font-medium tracking-tight">
+        P2 Provider
+      </span>
+    )
+
   return (
     <div className={`w-full px-2 pb-2 ${listIndex === 0 ? 'pt-2' : ''}`}>
       <Card
@@ -52,16 +68,17 @@ const RuleItem: React.FC<RuleItemProps> = (props) => {
         onPress={onEdit}
         className={!onEdit && !isEnabled ? 'opacity-50' : ''}
       >
-        <CardBody className="py-3 px-4">
+        <CardBody className="py-2.5 px-3.5">
           <div className="flex justify-between items-center gap-4">
             {/* 左侧：规则信息 */}
             <div className="flex-1 min-w-0 flex items-center gap-3">
               {/* 规则内容 */}
               <div className="flex-1 min-w-0">
-                <div title={payload} className="text-sm font-medium truncate mb-1.5">
+                <div title={payload} className="text-sm font-medium truncate mb-1">
                   {payload}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {priorityBadge}
                   <Chip size="sm" radius="sm" variant="bordered" className="text-xs">
                     {type}
                   </Chip>

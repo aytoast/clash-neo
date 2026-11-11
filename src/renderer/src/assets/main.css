@@ -6,8 +6,106 @@
 
 @theme {
   --default-font-family:
-    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
-    'Open Sans', 'Helvetica Neue', sans-serif;
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', Helvetica, Arial, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji';
+}
+
+html,
+body,
+#root {
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', Helvetica, Arial, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji';
+  font-size: 14px !important;
+  line-height: 1.5;
+  font-weight: 400;
+  color: hsl(var(--heroui-foreground));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+*,
+::before,
+::after {
+  font-family: inherit;
+}
+
+code,
+kbd,
+samp,
+pre,
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+/* Universal Typography Normalization: enforce 14px across all elements and text utilities */
+html,
+body,
+#root,
+button,
+input,
+select,
+textarea,
+p,
+span,
+div,
+a,
+label,
+li,
+ul,
+ol,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+table,
+th,
+td,
+.text-xs,
+.text-sm,
+.text-base,
+.text-lg,
+.text-xl,
+.text-2xl,
+.text-3xl,
+.text-tiny,
+.text-small,
+.text-medium,
+.text-large {
+  font-size: 14px !important;
+}
+
+button,
+input,
+select,
+textarea,
+[data-slot='input'],
+[data-slot='label'],
+[data-slot='value'],
+[data-slot='inner-wrapper'],
+[data-slot='content'],
+[data-slot='base'],
+[data-slot='title'],
+[data-slot='description'],
+.chip,
+.badge {
+  font-size: 14px !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0;
 }
 
 @font-face {
@@ -16,9 +114,11 @@
 }
 
 .driver-popover {
-  background-color: hsl(var(--heroui-content2)) !important;
-  border-radius: 8px !important;
+  background-color: hsl(var(--heroui-content1)) !important;
+  border: 1px solid hsl(var(--heroui-divider)) !important;
+  border-radius: 6px !important;
   color: hsl(var(--heroui-foreground)) !important;
+  box-shadow: none !important;
 }
 
 .driver-popover a {
@@ -34,40 +134,31 @@
   color: hsl(var(--heroui-default-500)) !important;
 }
 
-.driver-popover-prev-btn {
-  color: white !important;
-  text-shadow: none !important;
-  border: none !important;
-  padding: 8px !important;
-  border-radius: 5px !important;
-  font-size: 12px !important;
-  background-color: hsl(var(--heroui-primary)) !important;
-}
-
+.driver-popover-prev-btn,
 .driver-popover-next-btn {
-  color: white !important;
+  color: hsl(var(--heroui-primary-foreground)) !important;
   text-shadow: none !important;
-  border: none !important;
-  padding: 8px !important;
-  border-radius: 5px !important;
+  border: 1px solid hsl(var(--heroui-divider)) !important;
+  padding: 6px 10px !important;
+  border-radius: 4px !important;
   font-size: 12px !important;
   background-color: hsl(var(--heroui-primary)) !important;
 }
 
 .driver-popover-arrow-side-bottom {
-  border-bottom-color: hsl(var(--heroui-content2)) !important;
+  border-bottom-color: hsl(var(--heroui-content1)) !important;
 }
 
 .driver-popover-arrow-side-top {
-  border-top-color: hsl(var(--heroui-content2)) !important;
+  border-top-color: hsl(var(--heroui-content1)) !important;
 }
 
 .driver-popover-arrow-side-left {
-  border-left-color: hsl(var(--heroui-content2)) !important;
+  border-left-color: hsl(var(--heroui-content1)) !important;
 }
 
 .driver-popover-arrow-side-right {
-  border-right-color: hsl(var(--heroui-content2)) !important;
+  border-right-color: hsl(var(--heroui-content1)) !important;
 }
 
 .app-nodrag {
@@ -83,6 +174,7 @@ body:has([data-open='true'] [role='menu']) .app-drag {
 
 * {
   user-select: none;
+  text-shadow: none !important;
 }
 
 .select-text {
@@ -97,6 +189,7 @@ body:has([data-open='true'] [role='menu']) .app-drag {
 
 .flag-emoji {
   font-family:
+    'Inter',
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
@@ -117,35 +210,33 @@ body:has([data-open='true'] [role='menu']) .app-drag {
 }
 
 *::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 *::-webkit-scrollbar-corner {
   background-color: transparent;
 }
 
-/* Light mode */
 @media (prefers-color-scheme: light) {
   *::-webkit-scrollbar-thumb {
-    background: #c0c1c58f;
-    border-radius: 5px;
+    background: #d4d4d8;
+    border-radius: 3px;
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background: #c0c1c550;
+    background: #a1a1aa;
   }
 }
 
-/* Dark mode */
 @media (prefers-color-scheme: dark) {
   *::-webkit-scrollbar-thumb {
-    background: #c0c1c550;
-    border-radius: 5px;
+    background: #27272a;
+    border-radius: 3px;
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background: #c0c1c58f;
+    background: #3f3f46;
   }
 }
 
@@ -157,32 +248,32 @@ body:has([data-open='true'] [role='menu']) .app-drag {
 
 /* Toast */
 .toast-enter {
-  animation: toast-in 0.2s ease-out forwards;
+  animation: toast-in 0.16s ease-out forwards;
 }
 
 .toast-exit {
-  animation: toast-out 0.15s ease-in forwards;
+  animation: toast-out 0.12s ease-in forwards;
 }
 
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateX(20px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0);
   }
 }
 
 @keyframes toast-out {
   from {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0);
   }
   to {
     opacity: 0;
-    transform: translateX(20px);
+    transform: translateY(6px);
   }
 }
 
@@ -203,13 +294,12 @@ body:has([data-open='true'] [role='menu']) .app-drag {
 .sider-rail {
   isolation: isolate;
   overflow-x: clip;
-  transition:
-    width 280ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 200ms ease;
+  transition: width 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .sider-rail[data-expanded='true'] {
-  box-shadow: 4px 0 12px rgb(0 0 0 / 0.06);
+  box-shadow: none !important;
+  border-right: 1px solid hsl(var(--heroui-divider)) !important;
 }
 
 .sider-rail-background {
@@ -217,11 +307,11 @@ body:has([data-open='true'] [role='menu']) .app-drag {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-color: hsl(var(--heroui-background));
-  backdrop-filter: blur(var(--blur-lg, 16px));
-  border-right: 1px solid hsl(var(--heroui-divider));
+  background-color: hsl(var(--heroui-content1));
+  backdrop-filter: none !important;
+  border-right: 1px solid hsl(var(--heroui-divider)) !important;
   opacity: 0;
-  transition: opacity 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .sider-rail[data-expanded='true'] .sider-rail-background {
@@ -234,8 +324,8 @@ body:has([data-open='true'] [role='menu']) .app-drag {
   opacity: 0;
   transform: translateX(-4px);
   transition:
-    opacity 180ms ease,
-    transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 150ms ease,
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .sider-rail[data-expanded='true'] .sider-item-label {
@@ -249,8 +339,8 @@ body:has([data-open='true'] [role='menu']) .app-drag {
   overflow: hidden;
   opacity: 0;
   transition:
-    width 280ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 180ms ease;
+    width 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 150ms ease;
 }
 
 .sider-item[data-expanded='true'] .sider-item-action {
@@ -266,7 +356,7 @@ body:has([data-open='true'] [role='menu']) .app-drag {
 }
 
 .sider-resize-handle[data-animated='true'] {
-  transition: left 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: left 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .sider-rail[data-animated='false'],
@@ -282,4 +372,62 @@ body:has([data-open='true'] [role='menu']) .app-drag {
   .sider-resize-handle[data-animated='true'] {
     transition: none;
   }
+}
+
+/* SHADCN / Notion Flat Tokens */
+:root {
+  --heroui-radius-small: 4px !important;
+  --heroui-radius-medium: 6px !important;
+  --heroui-radius-large: 8px !important;
+  --heroui-box-shadow-small: none !important;
+  --heroui-box-shadow-medium: none !important;
+  --heroui-box-shadow-large: none !important;
+}
+
+[data-slot='base'],
+[data-slot='card'],
+[data-slot='popover'],
+[data-slot='modal'],
+[data-slot='tabList'] {
+  box-shadow: none !important;
+}
+
+[data-slot='card'] {
+  border: 1px solid hsl(var(--heroui-divider)) !important;
+  border-radius: 6px !important;
+  background-color: hsl(var(--heroui-content1));
+}
+
+[data-slot='tabList'] {
+  border: 1px solid hsl(var(--heroui-divider)) !important;
+  border-radius: 6px !important;
+  padding: 2px !important;
+  background-color: hsl(var(--heroui-content1)) !important;
+}
+
+button,
+input,
+select,
+textarea {
+  border-radius: 6px !important;
+}
+
+.shadcn-card {
+  border: 1px solid hsl(var(--heroui-divider));
+  border-radius: 6px;
+  background-color: hsl(var(--heroui-content1));
+}
+
+.shadcn-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid hsl(var(--heroui-divider));
+  border-radius: 4px;
+  background-color: hsl(var(--heroui-content2));
+  padding: 1px 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  line-height: 14px;
+  color: hsl(var(--heroui-default-500));
 }

@@ -19,7 +19,7 @@ interface Props {
 function delayColor(delay: number): 'primary' | 'success' | 'warning' | 'danger' {
   if (delay === -1) return 'primary'
   if (delay === 0) return 'danger'
-  if (delay < 500) return 'success'
+  if (delay < 300) return 'success'
   return 'warning'
 }
 
@@ -50,7 +50,7 @@ const ProxyItemBase: React.FC<Props> = (props) => {
   const delayText = useMemo(() => {
     if (delay === -1) return t('proxies.delay.test')
     if (delay === 0) return t('proxies.delay.timeout')
-    return delay.toString()
+    return `${delay} ms`
   }, [delay, t])
 
   const onDelay = useCallback((): void => {
@@ -69,23 +69,30 @@ const ProxyItemBase: React.FC<Props> = (props) => {
       onPress={() => onSelect(group.name, proxy.name)}
       isPressable
       fullWidth
-      shadow="sm"
-      className={`${
+      shadow="none"
+      className={`border transition-colors ${
         fixed
-          ? 'bg-secondary/30 border-r-2 border-r-secondary border-l-2 border-l-secondary'
+          ? 'bg-emerald-500/10 border-emerald-500/50'
           : selected
-            ? 'bg-primary/30 border-r-2 border-r-primary border-l-2 border-l-primary'
-            : 'bg-content2'
+            ? 'bg-content2 border-foreground/50'
+            : 'bg-content1 border-divider hover:bg-content2/60'
       }`}
       radius="sm"
     >
-      <CardBody className="p-1">
+      <CardBody className="px-2.5 py-2">
         {proxyDisplayMode === 'full' ? (
-          <div className="flex flex-col gap-1">
-            <div className="flex justify-between items-center pl-1">
-              <div className="text-ellipsis overflow-hidden whitespace-nowrap">
-                <div className="flag-emoji inline" title={proxy.name}>
-                  {proxy.name}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex justify-between items-center gap-1.5">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span
+                  className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                    fixed ? 'bg-emerald-500' : selected ? 'bg-foreground' : 'bg-transparent'
+                  }`}
+                />
+                <div className="text-ellipsis overflow-hidden whitespace-nowrap text-xs font-medium text-foreground">
+                  <div className="flag-emoji inline" title={proxy.name}>
+                    {proxy.name}
+                  </div>
                 </div>
               </div>
               {fixed && (
@@ -98,15 +105,15 @@ const ProxyItemBase: React.FC<Props> = (props) => {
                     mutateProxies()
                   }}
                   variant="light"
-                  className="h-5 p-0 text-sm"
+                  className="h-5 w-5 min-w-0 p-0 text-xs"
                 >
-                  <FaMapPin className="text-md le" />
+                  <FaMapPin className="text-xs" />
                 </Button>
               )}
             </div>
-            <div className="flex justify-between items-center pl-1">
-              <div className="flex gap-1 items-center">
-                <div className="text-foreground-400 text-xs bg-default-100 px-1 rounded-md">
+            <div className="flex justify-between items-center gap-1">
+              <div className="flex gap-1 items-center flex-wrap">
+                <div className="text-default-500 text-[10px] font-mono bg-content2 border border-divider px-1.5 py-0.2 rounded-[4px]">
                   {proxy.type}
                 </div>
                 {['tfo', 'udp', 'xudp', 'mptcp', 'smux'].map(
@@ -114,7 +121,7 @@ const ProxyItemBase: React.FC<Props> = (props) => {
                     proxy[protocol as keyof IMihomoProxy] && (
                       <div
                         key={protocol}
-                        className="text-foreground-400 text-xs bg-default-100 px-1 rounded-md"
+                        className="text-default-400 text-[10px] font-mono bg-content2 border border-divider px-1 py-0.2 rounded-[4px]"
                       >
                         {protocol}
                       </div>
@@ -128,20 +135,27 @@ const ProxyItemBase: React.FC<Props> = (props) => {
                 color={delayColor(delay)}
                 onPress={onDelay}
                 variant="light"
-                className="h-full text-sm ml-auto -mt-0.5 px-2 relative w-min whitespace-nowrap"
+                className="h-5 text-[11px] font-mono ml-auto px-1.5 relative w-min min-w-0 whitespace-nowrap"
               >
                 <div className="w-full h-full flex items-center justify-end">{delayText}</div>
               </Button>
             </div>
           </div>
         ) : (
-          <div className="flex justify-between items-center pl-1">
-            <div className="text-ellipsis overflow-hidden whitespace-nowrap">
-              <div className="flag-emoji inline" title={proxy.name}>
-                {proxy.name}
+          <div className="flex justify-between items-center gap-1.5">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span
+                className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                  fixed ? 'bg-emerald-500' : selected ? 'bg-foreground' : 'bg-transparent'
+                }`}
+              />
+              <div className="text-ellipsis overflow-hidden whitespace-nowrap text-xs font-medium text-foreground">
+                <div className="flag-emoji inline" title={proxy.name}>
+                  {proxy.name}
+                </div>
               </div>
             </div>
-            <div className="flex justify-end">
+            <div className="flex items-center justify-end shrink-0">
               {fixed && (
                 <Button
                   isIconOnly
@@ -152,9 +166,9 @@ const ProxyItemBase: React.FC<Props> = (props) => {
                     mutateProxies()
                   }}
                   variant="light"
-                  className="h-5 p-0 text-sm"
+                  className="h-5 w-5 min-w-0 p-0 text-xs"
                 >
-                  <FaMapPin className="text-md le" />
+                  <FaMapPin className="text-xs" />
                 </Button>
               )}
               <Button
@@ -164,7 +178,7 @@ const ProxyItemBase: React.FC<Props> = (props) => {
                 color={delayColor(delay)}
                 onPress={onDelay}
                 variant="light"
-                className="h-full text-sm px-2 relative w-min whitespace-nowrap"
+                className="h-5 text-[11px] font-mono px-1.5 relative w-min min-w-0 whitespace-nowrap"
               >
                 <div className="w-full h-full flex items-center justify-end">{delayText}</div>
               </Button>
@@ -177,7 +191,6 @@ const ProxyItemBase: React.FC<Props> = (props) => {
 }
 
 const ProxyItem = React.memo(ProxyItemBase, (prevProps, nextProps) => {
-  // 必要时重新渲染
   return (
     prevProps.proxy.name === nextProps.proxy.name &&
     prevProps.proxy.history === nextProps.proxy.history &&

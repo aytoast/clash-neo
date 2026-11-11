@@ -16,7 +16,11 @@ import { HiExternalLink } from 'react-icons/hi'
 import { useTranslation } from 'react-i18next'
 import { IoMdCloudDownload } from 'react-icons/io'
 
-const SubStore: React.FC = () => {
+interface SubStoreProps {
+  embedded?: boolean
+}
+
+const SubStore: React.FC<SubStoreProps> = ({ embedded = false }) => {
   const { t } = useTranslation()
   const { appConfig } = useAppConfig()
   const { useCustomSubStore, customSubStoreUrl } = appConfig || {}
@@ -41,66 +45,79 @@ const SubStore: React.FC = () => {
 
   if (!useCustomSubStore && !backendPort) return null
   if (!frontendPort) return null
-  return (
-    <>
-      <BasePage
-        title={t('substore.title')}
-        header={
-          <div className="flex gap-2">
-            <Button
-              title={t('substore.checkUpdate')}
-              isIconOnly
-              size="sm"
-              className="app-nodrag"
-              variant="light"
-              isLoading={isUpdating}
-              onPress={async () => {
-                try {
-                  new Notification(t('substore.updating'))
-                  setIsUpdating(true)
-                  await downloadSubStore()
-                  await stopSubStoreBackendServer()
-                  await startSubStoreBackendServer()
-                  await new Promise((resolve) => setTimeout(resolve, 1000))
-                  setFrontendPort(0)
-                  await stopSubStoreFrontendServer()
-                  await startSubStoreFrontendServer()
-                  await getPort(false)
-                  new Notification(t('substore.updateCompleted'))
-                } catch (e) {
-                  new Notification(`${t('substore.updateFailed')}: ${e}`)
-                } finally {
-                  setIsUpdating(false)
-                }
-              }}
-            >
-              <IoMdCloudDownload className="text-lg" />
-            </Button>
 
-            <Button
-              title={t('substore.openInBrowser')}
-              isIconOnly
-              size="sm"
-              className="app-nodrag"
-              variant="light"
-              onPress={() => {
-                open(
-                  `http://127.0.0.1:${frontendPort}?api=${useCustomSubStore ? customSubStoreUrl : `http://127.0.0.1:${backendPort}`}`
-                )
-              }}
-            >
-              <HiExternalLink className="text-lg" />
-            </Button>
-          </div>
-        }
+  const toolbarButtons = (
+    <div className="flex items-center gap-1 app-nodrag">
+      <Button
+        title={t('substore.checkUpdate')}
+        isIconOnly
+        size="sm"
+        className="app-nodrag"
+        variant="light"
+        isLoading={isUpdating}
+        onPress={async () => {
+          try {
+            new Notification(t('substore.updating'))
+            setIsUpdating(true)
+            await downloadSubStore()
+            await stopSubStoreBackendServer()
+            await startSubStoreBackendServer()
+            await new Promise((resolve) => setTimeout(resolve, 1000))
+            setFrontendPort(0)
+            await stopSubStoreFrontendServer()
+            await startSubStoreFrontendServer()
+            await getPort(false)
+            new Notification(t('substore.updateCompleted'))
+          } catch (e) {
+            new Notification(`${t('substore.updateFailed')}: ${e}`)
+          } finally {
+            setIsUpdating(false)
+          }
+        }}
       >
-        <iframe
-          className="w-full h-full"
-          allow="clipboard-write; clipboard-read"
-          src={`http://127.0.0.1:${frontendPort}?api=${useCustomSubStore ? customSubStoreUrl : `http://127.0.0.1:${backendPort}`}`}
-        />
-      </BasePage>
-    </>
+        <IoMdCloudDownload className="text-lg" />
+      </Button>
+
+      <Button
+        title={t('substore.openInBrowser')}
+        isIconOnly
+        size="sm"
+        className="app-nodrag"
+        variant="light"
+        onPress={() => {
+          open(
+            `http://127.0.0.1:${frontendPort}?api=${useCustomSubStore ? customSubStoreUrl : `http://127.0.0.1:${backendPort}`}`
+          )
+        }}
+      >
+        <HiExternalLink className="text-lg" />
+      </Button>
+    </div>
+  )
+
+  const bodyContent = (
+    <div className="flex flex-col h-full w-full">
+      {embedded && (
+        <div className="flex items-center justify-end px-3 py-1.5 border-b border-divider bg-background/50">
+          {toolbarButtons}
+        </div>
+      )}
+      <iframe
+        className="w-full flex-1 min-h-[460px]"
+        allow="clipboard-write; clipboard-read"
+        src={`http://127.0.0.1:${frontendPort}?api=${useCustomSubStore ? customSubStoreUrl : `http://127.0.0.1:${backendPort}`}`}
+      />
+    </div>
+  )
+
+  if (embedded) {
+    return bodyContent
+  }
+
+  return (
+    <BasePage title={t('substore.title')} header={toolbarButtons}>
+      {bodyContent}
+    </BasePage>
   )
 }
 
