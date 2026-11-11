@@ -15,20 +15,20 @@ const SettingCard: React.FC<Props> = (props) => {
     <Card
       shadow="none"
       radius="sm"
-      className={`${props.className ?? ''} m-2 border border-divider bg-content1`}
+      className={`${props.className ?? ''} mx-3 my-3 border border-divider bg-content1`}
     >
-      <CardBody className="p-3.5">{props.children}</CardBody>
+      <CardBody className="p-4">{props.children}</CardBody>
     </Card>
   ) : (
     <Accordion
       isCompact
-      className={`${props.className ?? ''} my-2 mx-2 px-0`}
+      className={`${props.className ?? ''} mx-3 my-3 px-0`}
       variant="splitted"
       itemClasses={{
-        base: 'border border-divider bg-content1 rounded-[6px] shadow-none px-3.5',
+        base: 'border border-divider bg-content1 rounded-[6px] shadow-none px-4',
         title: 'text-sm font-semibold text-foreground',
-        trigger: 'py-2.5',
-        content: 'pt-1 pb-3'
+        trigger: 'py-3',
+        content: 'pt-1 pb-4'
       }}
       onSelectionChange={(keys) => {
         setIsOpen(keys instanceof Set ? keys.size > 0 : false)

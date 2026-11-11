@@ -682,7 +682,7 @@ const DashboardPage: React.FC = () => {
                         size="sm"
                         variant="flat"
                         isLoading={testingGroup}
-                        className="h-6 px-2 text-[11px] border border-divider bg-background"
+                        className="h-8 px-3 text-xs border border-divider bg-background"
                         onPress={() => void handleTestPrimaryGroup()}
                       >
                         Ping
@@ -691,7 +691,7 @@ const DashboardPage: React.FC = () => {
                     <Button
                       size="sm"
                       variant="light"
-                      className="h-6 px-2 text-[11px]"
+                      className="h-8 px-3 text-xs"
                       endContent={<LuArrowUpRight className="text-xs" />}
                       onPress={() => navigate('/proxies')}
                     >
@@ -788,7 +788,7 @@ const DashboardPage: React.FC = () => {
             </div>
 
             {/* Middle Row: Active Profile & Quota + Live Throughput Sparkline + Engine Status */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-3.5">
               {/* Card 1: Active Profile & Subscription Quota */}
               <div className="shadcn-card p-4 border border-divider bg-content1 flex flex-col justify-between gap-3 overflow-hidden">
                 <div className="flex items-center justify-between">
@@ -801,7 +801,7 @@ const DashboardPage: React.FC = () => {
                         isIconOnly
                         size="sm"
                         variant="light"
-                        className="h-6 w-6 min-w-0"
+                        className="h-8 w-8 min-w-0"
                         onPress={() => setShowRuntimeConfig(true)}
                       >
                         <LuFileCode className="text-xs" />
@@ -813,7 +813,7 @@ const DashboardPage: React.FC = () => {
                           isIconOnly
                           size="sm"
                           variant="light"
-                          className="h-6 w-6 min-w-0"
+                          className="h-8 w-8 min-w-0"
                           isDisabled={updatingProfile}
                           onPress={async () => {
                             setUpdatingProfile(true)
@@ -834,7 +834,7 @@ const DashboardPage: React.FC = () => {
                     <Button
                       size="sm"
                       variant="light"
-                      className="h-6 px-2 text-[11px]"
+                      className="h-8 px-3 text-xs"
                       endContent={<LuArrowUpRight className="text-xs" />}
                       onPress={() => navigate('/profiles')}
                     >
@@ -917,7 +917,7 @@ const DashboardPage: React.FC = () => {
                   <Button
                     size="sm"
                     variant="light"
-                    className="h-6 px-2 text-[11px]"
+                    className="h-8 px-3 text-xs"
                     endContent={<LuArrowUpRight className="text-xs" />}
                     onPress={() => navigate('/telemetry')}
                   >
@@ -970,7 +970,7 @@ const DashboardPage: React.FC = () => {
                         isIconOnly
                         size="sm"
                         variant="light"
-                        className="h-6 w-6 min-w-0"
+                        className="h-8 w-8 min-w-0"
                         isDisabled={restartingCore}
                         onPress={async () => {
                           setRestartingCore(true)
@@ -993,7 +993,7 @@ const DashboardPage: React.FC = () => {
                     <Button
                       size="sm"
                       variant="light"
-                      className="h-6 px-2 text-[11px]"
+                      className="h-8 px-3 text-xs"
                       endContent={<LuArrowUpRight className="text-xs" />}
                       onPress={() => navigate('/mihomo')}
                     >

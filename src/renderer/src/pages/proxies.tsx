@@ -604,9 +604,9 @@ const Proxies: React.FC<ProxiesProps> = ({ embedded = false }: ProxiesProps) => 
               })
             }}
           >
-            <CardBody className="w-full h-14">
-              <div className="flex justify-between h-full gap-3">
-                <div className="flex min-w-0 h-full text-ellipsis overflow-hidden whitespace-nowrap">
+            <CardBody className="w-full min-h-[60px] px-3 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center text-ellipsis overflow-hidden whitespace-nowrap">
                   {groups[index].icon ? (
                     <Avatar
                       className="bg-transparent mr-2 shrink-0"
@@ -619,13 +619,13 @@ const Proxies: React.FC<ProxiesProps> = ({ embedded = false }: ProxiesProps) => 
                       }
                     />
                   ) : null}
-                  <div className="flex min-w-0 flex-col h-full">
-                    <div className="text-ellipsis overflow-hidden whitespace-nowrap leading-tight text-md flex-5 flex items-center">
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <div className="text-ellipsis overflow-hidden whitespace-nowrap text-sm leading-5 flex items-center">
                       <span title={groups[index].name} className="flag-emoji inline-block truncate">
                         {groups[index].name}
                       </span>
                     </div>
-                    <div className="text-ellipsis overflow-hidden whitespace-nowrap text-[10px] text-foreground-500 leading-tight flex-3 flex items-center">
+                    <div className="text-ellipsis overflow-hidden whitespace-nowrap text-xs text-foreground-500 leading-4 flex items-center">
                       <span>{groups[index].type}</span>
                       <span
                         title={groups[index].now}
